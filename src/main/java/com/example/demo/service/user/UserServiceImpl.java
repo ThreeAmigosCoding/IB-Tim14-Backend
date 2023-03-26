@@ -15,13 +15,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public User createNew(UserDTO userDTO) {
         User user = new User();
+
+        if (userRepository.findByEmail(userDTO.getEmail()) != null){
+            return null; //change to throw new ExceptionXXXXX...
+        }
+
         user.setName(userDTO.getName());
         user.setSurname(userDTO.getSurname());
         user.setAddress(userDTO.getAddress());
         user.setTelephoneNumber(userDTO.getTelephoneNumber());
         user.setEmail(userDTO.getEmail());
         user.setPassword(userDTO.getPassword());
-
+        //maybe implement mapper
         return save(user);
     }
 

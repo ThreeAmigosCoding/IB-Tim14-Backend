@@ -1,6 +1,7 @@
 package com.example.demo.model.user;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -14,11 +15,25 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @NotNull
+    @Pattern(regexp = "^[a-zA-Z]*$", message = "The name must contain only letters")
     private String name;
+    @NotNull
+    @Pattern(regexp = "^[a-zA-Z]*$", message = "The name must contain only letters")
     private String surname;
+    @NotNull
+    @Size(min = 5, max = 15)
     private String telephoneNumber;
+    @NotNull
+    @Email
+    @Column(unique = true)
     private String email;
+    @NotNull
+    @Size(min = 10, max = 50)
     private String address; //za sada ovako
+    @NotNull
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$", message = "Password must contain at least 8 characters," +
+            "1 uppercase letter, q special character and 1 number")
     private String password;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",

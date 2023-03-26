@@ -1,15 +1,31 @@
 package com.example.demo.dto.user;
 
+import jakarta.validation.constraints.*;
+
 public class UserDTO {
 
+    @NotNull
+    @Pattern(regexp = "^[a-zA-Z]*$", message = "The name must contain only letters")
     private String name;
+    @NotNull
+    @Pattern(regexp = "^[a-zA-Z]*$", message = "The name must contain only letters")
     private String surname;
+    @NotNull
+    @Size(min = 5, max = 15)
     private String telephoneNumber;
+    @NotNull
+    @Email
     private String email;
+    @NotNull
+    @Size(min = 10, max = 50)
     private String address; //za sada ovako
+    @NotNull
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$", message = "Password must contain at least 8 characters," +
+            "1 uppercase letter, q special character and 1 number")
     private String password;
 
 
+    //region Constructors
     public UserDTO(String name, String surname, String telephoneNumber, String email, String address, String password) {
         this.name = name;
         this.surname = surname;
@@ -20,7 +36,9 @@ public class UserDTO {
     }
 
     public UserDTO(){}
+    //endregion
 
+    //region Getters and Setters
     public String getName() {
         return name;
     }
@@ -68,4 +86,5 @@ public class UserDTO {
     public void setPassword(String password) {
         this.password = password;
     }
+    //endregion
 }
