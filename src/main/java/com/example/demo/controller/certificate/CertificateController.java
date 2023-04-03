@@ -27,4 +27,10 @@ public class CertificateController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PostMapping(value = "/create-certificate/{id}", consumes = "application/json")
+    public ResponseEntity<?> createCertificate(@PathVariable Integer id) {
+        return null;
+    }
+
 }

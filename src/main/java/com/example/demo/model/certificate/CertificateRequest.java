@@ -19,7 +19,7 @@ public class CertificateRequest {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
     @JoinColumn(name = "issuer_id")
-    private User issuer;
+    private Certificate issuer;
 
     @Column(nullable = false)
     private LocalDate requestDate;
@@ -34,12 +34,15 @@ public class CertificateRequest {
     @Column
     private Boolean approved;
 
+    @Column
+    private String flags;
+
     // region Constructors
 
     public CertificateRequest() {}
 
-    public CertificateRequest(Integer id, String signatureAlgorithm, User issuer, LocalDate requestDate,
-                              CertificateType type, User owner, Boolean approved) {
+    public CertificateRequest(Integer id, String signatureAlgorithm, Certificate issuer, LocalDate requestDate,
+                              CertificateType type, User owner, Boolean approved, String flags) {
         this.id = id;
         this.signatureAlgorithm = signatureAlgorithm;
         this.issuer = issuer;
@@ -47,6 +50,7 @@ public class CertificateRequest {
         this.type = type;
         this.owner = owner;
         this.approved = approved;
+        this.flags = flags;
     }
 
     public CertificateRequest(CertificateRequestDTO certificateRequestDTO) {
@@ -54,6 +58,7 @@ public class CertificateRequest {
         this.requestDate = certificateRequestDTO.getRequestDate();
         this.type = certificateRequestDTO.getType();
         this.approved = certificateRequestDTO.getApproved();
+        this.flags = certificateRequestDTO.getFlags();
     }
 
     // endregion Constructors
@@ -76,11 +81,11 @@ public class CertificateRequest {
         this.signatureAlgorithm = signatureAlgorithm;
     }
 
-    public User getIssuer() {
+    public Certificate getIssuer() {
         return issuer;
     }
 
-    public void setIssuer(User issuer) {
+    public void setIssuer(Certificate issuer) {
         this.issuer = issuer;
     }
 
@@ -114,6 +119,14 @@ public class CertificateRequest {
 
     public void setApproved(Boolean approved) {
         this.approved = approved;
+    }
+
+    public String getFlags() {
+        return flags;
+    }
+
+    public void setFlags(String flags) {
+        this.flags = flags;
     }
 
     // endregion

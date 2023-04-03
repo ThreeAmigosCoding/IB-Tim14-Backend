@@ -21,7 +21,7 @@ public class Certificate {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
     @JoinColumn(name = "issuer_id")
-    private User issuer;
+    private Certificate issuer;
 
     @Column(nullable = false)
     private LocalDate validFrom;
@@ -46,13 +46,16 @@ public class Certificate {
     @JoinColumn(name = "certificate_request_id")
     private CertificateRequest certificateRequest;
 
+    @Column(nullable = false)
+    private String flags;
+
     // region Constructors
 
     public Certificate() { }
 
-    public Certificate(Integer id, String serialNumber, String signatureAlgorithm, User issuer, LocalDate validFrom,
-                       LocalDate validTo, Boolean valid, CertificateType type, User owner, String alias,
-                       CertificateRequest certificateRequest) {
+    public Certificate(Integer id, String serialNumber, String signatureAlgorithm, Certificate issuer,
+                       LocalDate validFrom, LocalDate validTo, Boolean valid, CertificateType type,
+                       User owner, String alias, CertificateRequest certificateRequest, String flags) {
         this.id = id;
         this.serialNumber = serialNumber;
         this.signatureAlgorithm = signatureAlgorithm;
@@ -64,6 +67,7 @@ public class Certificate {
         this.owner = owner;
         this.alias = alias;
         this.certificateRequest = certificateRequest;
+        this.flags = flags;
     }
 
     // endregion
@@ -94,11 +98,11 @@ public class Certificate {
         this.signatureAlgorithm = signatureAlgorithm;
     }
 
-    public User getIssuer() {
+    public Certificate getIssuer() {
         return issuer;
     }
 
-    public void setIssuer(User issuer) {
+    public void setIssuer(Certificate issuer) {
         this.issuer = issuer;
     }
 
@@ -156,6 +160,18 @@ public class Certificate {
 
     public void setCertificateRequest(CertificateRequest certificateRequest) {
         this.certificateRequest = certificateRequest;
+    }
+
+    public Boolean getValid() {
+        return valid;
+    }
+
+    public String getFlags() {
+        return flags;
+    }
+
+    public void setFlags(String flags) {
+        this.flags = flags;
     }
 
     // endregion

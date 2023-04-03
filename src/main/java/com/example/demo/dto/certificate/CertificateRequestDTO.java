@@ -14,18 +14,21 @@ public class CertificateRequestDTO {
     private Integer ownerId;
     private Boolean approved;
 
+    private String flags;
+
     // region Constructors
 
     public CertificateRequestDTO() { }
 
     public CertificateRequestDTO(String signatureAlgorithm, Integer issuerId, LocalDate requestDate,
-                                 CertificateType type, Integer ownerId, Boolean approved) {
+                                 CertificateType type, Integer ownerId, Boolean approved, String flags) {
         this.signatureAlgorithm = signatureAlgorithm;
         this.issuerId = issuerId;
         this.requestDate = requestDate;
         this.type = type;
         this.ownerId = ownerId;
         this.approved = approved;
+        this.flags = flags;
     }
 
     public CertificateRequestDTO(CertificateRequest certificateRequest) {
@@ -35,6 +38,7 @@ public class CertificateRequestDTO {
         this.type = certificateRequest.getType();
         this.ownerId = certificateRequest.getOwner().getId();
         this.approved = certificateRequest.isApproved();
+        this.flags = certificateRequest.getFlags();
     }
 
     // endregion
@@ -87,6 +91,14 @@ public class CertificateRequestDTO {
 
     public void setApproved(Boolean approved) {
         this.approved = approved;
+    }
+
+    public String getFlags() {
+        return flags;
+    }
+
+    public void setFlags(String flags) {
+        this.flags = flags;
     }
 
     // endregion
