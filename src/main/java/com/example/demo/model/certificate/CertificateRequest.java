@@ -1,5 +1,6 @@
 package com.example.demo.model.certificate;
 
+import com.example.demo.dto.certificate.CertificateRequestDTO;
 import com.example.demo.model.user.User;
 import jakarta.persistence.*;
 
@@ -46,6 +47,13 @@ public class CertificateRequest {
         this.type = type;
         this.owner = owner;
         this.approved = approved;
+    }
+
+    public CertificateRequest(CertificateRequestDTO certificateRequestDTO) {
+        this.signatureAlgorithm = certificateRequestDTO.getSignatureAlgorithm();
+        this.requestDate = certificateRequestDTO.getRequestDate();
+        this.type = certificateRequestDTO.getType();
+        this.approved = certificateRequestDTO.getApproved();
     }
 
     // endregion Constructors

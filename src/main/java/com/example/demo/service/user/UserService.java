@@ -4,6 +4,8 @@ import com.example.demo.dto.user.UserDTO;
 import com.example.demo.model.user.User;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public interface UserService {
 
@@ -13,6 +15,6 @@ public interface UserService {
 
     public void delete(User user);
 
-
+    public Optional<User> findById(Integer id);
 
 }
