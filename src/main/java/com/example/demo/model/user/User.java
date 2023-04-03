@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,9 +41,11 @@ public class User implements UserDetails {
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
     private List<Role> roles;
+    @Column(name = "last_password_reset_date")
+    private Timestamp lastPasswordResetDate;
 
 
-    public User(Integer id, String name, String surname, String telephoneNumber, String email, String address, String password, List<Role> roles) {
+    public User(Integer id, String name, String surname, String telephoneNumber, String email, String address, String password, List<Role> roles, Timestamp lastPasswordResetDate) {
         this.id = id;
         this.name = name;
         this.surname = surname;
@@ -51,6 +54,7 @@ public class User implements UserDetails {
         this.address = address;
         this.password = password;
         this.roles = roles;
+        this.lastPasswordResetDate = lastPasswordResetDate;
     }
 
     public User() {}
@@ -145,5 +149,11 @@ public class User implements UserDetails {
         return true;
     }
 
+    public Timestamp getLastPasswordResetDate() {
+        return lastPasswordResetDate;
+    }
 
+    public void setLastPasswordResetDate(Timestamp lastPasswordResetDate) {
+        this.lastPasswordResetDate = lastPasswordResetDate;
+    }
 }
