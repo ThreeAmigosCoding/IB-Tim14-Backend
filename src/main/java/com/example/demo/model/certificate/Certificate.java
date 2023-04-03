@@ -3,6 +3,7 @@ package com.example.demo.model.certificate;
 import com.example.demo.model.user.User;
 import jakarta.persistence.*;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 
 @Entity
@@ -14,7 +15,7 @@ public class Certificate {
     private Integer id;
 
     @Column(unique = true, nullable = false)
-    private String serialNumber;
+    private BigInteger serialNumber;
 
     @Column(nullable = false)
     private String signatureAlgorithm;
@@ -53,7 +54,7 @@ public class Certificate {
 
     public Certificate() { }
 
-    public Certificate(Integer id, String serialNumber, String signatureAlgorithm, Certificate issuer,
+    public Certificate(Integer id, BigInteger serialNumber, String signatureAlgorithm, Certificate issuer,
                        LocalDate validFrom, LocalDate validTo, Boolean valid, CertificateType type,
                        User owner, String alias, CertificateRequest certificateRequest, String flags) {
         this.id = id;
@@ -70,6 +71,15 @@ public class Certificate {
         this.flags = flags;
     }
 
+    public Certificate(CertificateRequest certificateRequest) {
+        this.signatureAlgorithm = certificateRequest.getSignatureAlgorithm();
+        this.issuer = certificateRequest.getIssuer();
+        this.type = certificateRequest.getType();
+        this.owner = certificateRequest.getOwner();
+        this.certificateRequest = certificateRequest;
+        this.flags = certificateRequest.getFlags();
+    }
+
     // endregion
 
     // region Getters and Setters
@@ -82,11 +92,11 @@ public class Certificate {
         this.id = id;
     }
 
-    public String getSerialNumber() {
+    public BigInteger getSerialNumber() {
         return serialNumber;
     }
 
-    public void setSerialNumber(String serialNumber) {
+    public void setSerialNumber(BigInteger serialNumber) {
         this.serialNumber = serialNumber;
     }
 

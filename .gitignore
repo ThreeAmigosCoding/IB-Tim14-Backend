@@ -35,3 +35,4 @@ build/
 ### Certificates ###
 *.crt
 *.key
+*.jks
