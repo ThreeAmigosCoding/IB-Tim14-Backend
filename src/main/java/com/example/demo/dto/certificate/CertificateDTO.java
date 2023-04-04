@@ -46,7 +46,8 @@ public class CertificateDTO {
         this.id = certificate.getId();
         this.serialNumber = certificate.getSerialNumber();
         this.signatureAlgorithm = certificate.getSignatureAlgorithm();
-        this.issuerAlias = certificate.getIssuer().getAlias();
+        if(certificate.getIssuer() != null)
+            this.issuerAlias = certificate.getIssuer().getAlias();
         this.validFrom = certificate.getValidFrom();
         this.validTo = certificate.getValidTo();
         this.valid = certificate.getValid();
@@ -55,6 +56,7 @@ public class CertificateDTO {
         this.alias = certificate.getAlias();
         this.flags = certificate.getFlags();
     }
+
 
     //endregion
 

@@ -1,6 +1,7 @@
 package com.example.demo.service.certificate;
 
 import ch.qos.logback.core.net.ssl.KeyStoreFactoryBean;
+import com.example.demo.dto.certificate.CertificateDTO;
 import com.example.demo.dto.certificate.CertificateRequestDTO;
 import com.example.demo.model.certificate.Certificate;
 import com.example.demo.model.certificate.CertificateRequest;
@@ -21,19 +22,27 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class CertificateServiceImpl implements CertificateService {
@@ -49,6 +58,8 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Autowired
     private RoleService roleService;
+
+    private static final String certDir = "src/certificates";
 
     @Override
     public CertificateRequestDTO createRequest(CertificateRequestDTO certificateRequestDTO) throws Exception {
@@ -92,9 +103,11 @@ public class CertificateServiceImpl implements CertificateService {
         Date to = fromLocalDateToDate(LocalDate.now().plusWeeks(2));
 
         if (issuer != null) {
+            if (issuer.getType() == CertificateType.END) throw new Exception("End certificates can't sign other certificates!");
             issuerCertificate = loadCertificate(issuer.getAlias());
+            System.out.println(issuerCertificate.getSubjectX500Principal().getClass());
             issuerCertificate.checkValidity();
-            issuerX500Name = X500Name.getInstance(issuerCertificate.getSubjectX500Principal());
+            issuerX500Name = new X500Name(issuerCertificate.getSubjectX500Principal().getName());
             contentSigner = builder.build(loadKey(issuer.getAlias()));
         }
 
@@ -116,7 +129,6 @@ public class CertificateServiceImpl implements CertificateService {
         X509Certificate newCertificate = certConverter.getCertificate(certHolder);
         String alias = newCertificate.getSerialNumber() + "_" + certificateRequest.getOwner().getName() + "_" +
                 certificateRequest.getOwner().getSurname();
-        System.out.println(newCertificate);
 
         addCertificate(alias, newCertificate, keyPair.getPrivate());
 
@@ -124,30 +136,47 @@ public class CertificateServiceImpl implements CertificateService {
                 fromDateToLocalDate(to));
 
         certificateRepository.save(certificate);
+        certificateRequest.setApproved(true);
+        certificateRequestRepository.save(certificateRequest);
 
         return certificate;
     }
 
     @Override
     public X509Certificate loadCertificate(String alias) throws Exception {
-       return null;
+        try (FileInputStream certIn = new FileInputStream(certDir + "/" + alias + ".crt")) {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            return (X509Certificate) cf.generateCertificate(certIn);
+        }
     }
 
     @Override
-    public PrivateKey loadKey(String alias) throws NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException,
-            UnrecoverableKeyException {
-        return null;
+    public PrivateKey loadKey(String alias) throws Exception {
+        try (FileInputStream keyIn = new FileInputStream(certDir + "/" + alias + ".key")) {
+            byte[] keyBytes = keyIn.readAllBytes();
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return keyFactory.generatePrivate(keySpec);
+        }
     }
 
     @Override
     public void addCertificate(String alias, X509Certificate certificate, PrivateKey privateKey) throws Exception {
-
+        try (FileOutputStream certOut = new FileOutputStream(certDir + "/" + alias + ".crt");
+             FileOutputStream keyOut = new FileOutputStream(certDir + "/" + alias + ".key")) {
+            certOut.write(certificate.getEncoded());
+            keyOut.write(privateKey.getEncoded());
+        }
     }
 
     @Override
-    public BigInteger generateSerialNumber() throws NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException
-    {
-        return BigInteger.ONE;
+    public BigInteger generateSerialNumber() {
+        byte[] bytes = new byte[16];
+        UUID uuid = UUID.randomUUID();
+        ByteBuffer.wrap(bytes)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits());
+        return new BigInteger(bytes);
     }
 
     @Override
@@ -161,6 +190,21 @@ public class CertificateServiceImpl implements CertificateService {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public List<CertificateDTO> getAllCertificates() {
+         return certificateRepository.findAll().stream()
+                .map(CertificateDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void checkValidity(Integer id) throws Exception {
+        Certificate certificate = certificateRepository.findById(id).orElseThrow();
+        X509Certificate x509Certificate = loadCertificate(certificate.getAlias());
+
+        x509Certificate.checkValidity();
     }
 
     private LocalDate fromDateToLocalDate(Date date) {

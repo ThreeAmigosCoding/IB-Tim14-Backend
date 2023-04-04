@@ -25,6 +25,7 @@ public class CertificateRequest {
     private LocalDate requestDate;
 
     @Enumerated(value = EnumType.STRING)
+    @Column(name = "certificate_type")
     private CertificateType type;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)

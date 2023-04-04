@@ -34,6 +34,7 @@ public class Certificate {
     private Boolean valid;
 
     @Enumerated(value = EnumType.STRING)
+    @Column(name = "certificate_type")
     private CertificateType type;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
@@ -83,6 +84,7 @@ public class Certificate {
         this.serialNumber = serialNumber;
         this.validFrom = validFrom;
         this.validTo = validTo;
+        this.valid = true;
     }
 
     // endregion

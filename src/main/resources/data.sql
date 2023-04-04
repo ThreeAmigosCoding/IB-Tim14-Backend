@@ -31,3 +31,13 @@ INSERT INTO USER_ROLE (user_id, role_id) VALUES (3, 2);
 INSERT INTO USER_ROLE (user_id, role_id) VALUES (4, 1);
 INSERT INTO USER_ROLE (user_id, role_id) VALUES (5, 1);
 INSERT INTO USER_ROLE (user_id, role_id) VALUES (6, 1);
+
+
+INSERT INTO CERTIFICATE_REQUESTS (approved, flags, request_date, signature_algorithm, certificate_type, issuer_id, owner_id) VALUES
+                                 (true, '1,2,3,4,5,6,7', '2023-04-04', 'SHA256withRSA', 'ROOT', null, 1);
+
+INSERT INTO CERTIFICATES (alias, flags, serial_number, signature_algorithm, certificate_type, valid, valid_from, valid_to,
+                          certificate_request_id, issuer_id, owner_id) VALUES
+                         ('-68299581185896008646150721084814966708_Luka_Djordjevic', '1,2,3,4,5,6,7',
+                          -68299581185896008646150721084814966708, 'SHA256withRSA', 'ROOT', true, '2023-04-04',
+                          '2024-04-04', 1, null, 1);
