@@ -1,5 +1,6 @@
 package com.example.demo.model.certificate;
 
+import com.example.demo.dto.certificate.CertificateRequestDTO;
 import com.example.demo.model.user.User;
 import jakarta.persistence.*;
 
@@ -18,12 +19,13 @@ public class CertificateRequest {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
     @JoinColumn(name = "issuer_id")
-    private User issuer;
+    private Certificate issuer;
 
     @Column(nullable = false)
     private LocalDate requestDate;
 
     @Enumerated(value = EnumType.STRING)
+    @Column(name = "certificate_type")
     private CertificateType type;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
@@ -33,12 +35,15 @@ public class CertificateRequest {
     @Column
     private Boolean approved;
 
+    @Column
+    private String flags;
+
     // region Constructors
 
     public CertificateRequest() {}
 
-    public CertificateRequest(Integer id, String signatureAlgorithm, User issuer, LocalDate requestDate,
-                              CertificateType type, User owner, Boolean approved) {
+    public CertificateRequest(Integer id, String signatureAlgorithm, Certificate issuer, LocalDate requestDate,
+                              CertificateType type, User owner, Boolean approved, String flags) {
         this.id = id;
         this.signatureAlgorithm = signatureAlgorithm;
         this.issuer = issuer;
@@ -46,6 +51,15 @@ public class CertificateRequest {
         this.type = type;
         this.owner = owner;
         this.approved = approved;
+        this.flags = flags;
+    }
+
+    public CertificateRequest(CertificateRequestDTO certificateRequestDTO) {
+        this.signatureAlgorithm = certificateRequestDTO.getSignatureAlgorithm();
+        this.requestDate = certificateRequestDTO.getRequestDate();
+        this.type = certificateRequestDTO.getType();
+        this.approved = certificateRequestDTO.getApproved();
+        this.flags = certificateRequestDTO.getFlags();
     }
 
     // endregion Constructors
@@ -68,11 +82,11 @@ public class CertificateRequest {
         this.signatureAlgorithm = signatureAlgorithm;
     }
 
-    public User getIssuer() {
+    public Certificate getIssuer() {
         return issuer;
     }
 
-    public void setIssuer(User issuer) {
+    public void setIssuer(Certificate issuer) {
         this.issuer = issuer;
     }
 
@@ -106,6 +120,14 @@ public class CertificateRequest {
 
     public void setApproved(Boolean approved) {
         this.approved = approved;
+    }
+
+    public String getFlags() {
+        return flags;
+    }
+
+    public void setFlags(String flags) {
+        this.flags = flags;
     }
 
     // endregion
