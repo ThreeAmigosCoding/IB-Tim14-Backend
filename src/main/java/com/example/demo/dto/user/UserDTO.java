@@ -1,5 +1,6 @@
 package com.example.demo.dto.user;
 
+import com.example.demo.model.user.User;
 import jakarta.validation.constraints.*;
 
 public class UserDTO {
@@ -26,6 +27,9 @@ public class UserDTO {
 
 
     //region Constructors
+
+    public UserDTO(){}
+
     public UserDTO(String name, String surname, String telephoneNumber, String email, String address, String password) {
         this.name = name;
         this.surname = surname;
@@ -35,7 +39,15 @@ public class UserDTO {
         this.password = password;
     }
 
-    public UserDTO(){}
+    public UserDTO(User user) {
+        this.name = user.getName();
+        this.surname = user.getSurname();
+        this.telephoneNumber = user.getTelephoneNumber();
+        this.email = user.getEmail();
+        this.address = user.getAddress();
+        this.password = user.getPassword();
+    }
+
     //endregion
 
     //region Getters and Setters

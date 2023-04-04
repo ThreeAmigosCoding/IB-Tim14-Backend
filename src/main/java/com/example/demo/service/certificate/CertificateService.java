@@ -13,17 +13,13 @@ import java.security.cert.X509Certificate;
 @Service
 public interface CertificateService {
 
-    CertificateRequestDTO createRequest(CertificateRequestDTO certificateRequestDTO);
+    CertificateRequestDTO createRequest(CertificateRequestDTO certificateRequestDTO) throws Exception;
 
     Certificate issueCertificate(CertificateRequest certificateRequest) throws Exception;
 
-    Certificate exportGeneratedCertificate(X509Certificate certificate);
+    Certificate generateCertificate(CertificateRequest certificateRequest) throws Exception;
 
-    X509Certificate parseFlags(String keyUsageFlags);
-
-    X509Certificate generateCertificate(CertificateRequest certificateRequest) throws Exception;
-
-    void addCertificate(String alias, X509Certificate certificate) throws Exception;
+    void addCertificate(String alias, X509Certificate certificate, PrivateKey privateKey) throws Exception;
 
     X509Certificate loadCertificate(String alias) throws Exception;
 

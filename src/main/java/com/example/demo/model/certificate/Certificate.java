@@ -71,13 +71,18 @@ public class Certificate {
         this.flags = flags;
     }
 
-    public Certificate(CertificateRequest certificateRequest) {
+    public Certificate(CertificateRequest certificateRequest, String alias, BigInteger serialNumber,
+                       LocalDate validFrom, LocalDate validTo) {
         this.signatureAlgorithm = certificateRequest.getSignatureAlgorithm();
         this.issuer = certificateRequest.getIssuer();
         this.type = certificateRequest.getType();
         this.owner = certificateRequest.getOwner();
         this.certificateRequest = certificateRequest;
         this.flags = certificateRequest.getFlags();
+        this.alias = alias;
+        this.serialNumber = serialNumber;
+        this.validFrom = validFrom;
+        this.validTo = validTo;
     }
 
     // endregion

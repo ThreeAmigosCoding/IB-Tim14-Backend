@@ -13,7 +13,6 @@ public class CertificateRequestDTO {
     private CertificateType type;
     private Integer ownerId;
     private Boolean approved;
-
     private String flags;
 
     // region Constructors
@@ -33,7 +32,8 @@ public class CertificateRequestDTO {
 
     public CertificateRequestDTO(CertificateRequest certificateRequest) {
         this.signatureAlgorithm = certificateRequest.getSignatureAlgorithm();
-        this.issuerId = certificateRequest.getIssuer().getId();
+        if (certificateRequest.getIssuer() != null)
+            this.issuerId = certificateRequest.getIssuer().getId();
         this.requestDate = certificateRequest.getRequestDate();
         this.type = certificateRequest.getType();
         this.ownerId = certificateRequest.getOwner().getId();
