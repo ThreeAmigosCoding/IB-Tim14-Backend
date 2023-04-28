@@ -20,4 +20,5 @@ public interface UserService {
 
     User activate(UserActivation activation);
 
+    User findByEmail(String email);
 }

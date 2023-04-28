@@ -2,11 +2,14 @@ package com.example.demo.controller.user;
 
 
 import com.example.demo.dto.ErrorDTO;
+import com.example.demo.dto.user.PasswordResetDTO;
 import com.example.demo.dto.user.UserDTO;
 import com.example.demo.dto.user.UserTokenState;
+import com.example.demo.model.user.PasswordReset;
 import com.example.demo.model.user.User;
 import com.example.demo.model.user.UserActivation;
 import com.example.demo.service.email.EmailService;
+import com.example.demo.service.user.PasswordResetService;
 import com.example.demo.service.user.UserActivationService;
 import com.example.demo.service.user.UserService;
 import com.example.demo.util.TokenUtils;
@@ -14,11 +17,16 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.sql.Timestamp;
+import java.util.Date;
 
 @RestController
 @CrossOrigin
@@ -32,7 +40,13 @@ public class UserController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private UserService userService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
     @Autowired
     private UserActivationService userActivationService;
@@ -96,5 +110,41 @@ public class UserController {
         emailService.sendSimpleEmail(userActivationService.findById(activationId).getUser().getEmail(),
                 "Account activated", "Your activation with id=" + activationId + " was successful!");
         return new ResponseEntity<>(new ErrorDTO("Successful account activation!"), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/{email}/resetPassword")
+    public ResponseEntity<?> getResetRequest(@PathVariable String email){
+        User user = userService.findByEmail(email);
+
+        if (user == null) {
+            return new ResponseEntity<>("User with this email does not exist!", HttpStatus.NOT_FOUND);
+        }
+
+        PasswordReset passwordReset = new PasswordReset(user);
+        PasswordReset passwordResetSaved = passwordResetService.save(passwordReset);
+
+        emailService.sendSimpleEmail(user.getEmail(), "Password reset", "To reset password please enter" +
+                "this code: " + passwordResetSaved.getCode());
+        return new ResponseEntity<>("Email with reset code has been sent!", HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping(value = "/{email}/resetPassword")
+    public ResponseEntity<?> resetPassword(@PathVariable String email, @RequestBody PasswordResetDTO passwordResetDTO){
+        User user = userService.findByEmail(email);
+        if (user == null) {
+            return new ResponseEntity<>("User does not exist!", HttpStatus.NOT_FOUND);
+        }
+
+        PasswordReset passwordReset = passwordResetService.findOne(passwordResetDTO.getCode(), user);
+        if (passwordReset == null || passwordReset.getExpiresIn().getTime() < new Date().getTime()){
+            return new ResponseEntity<>("Code is expired or not correct!", HttpStatus.BAD_REQUEST);
+        }
+
+        user.setPassword(passwordEncoder.encode(passwordResetDTO.getNewPassword()));
+        user.setLastPasswordResetDate(new Timestamp((new Date()).getTime()));
+        userService.save(user);
+
+        return new ResponseEntity<>("Password successfully changed!", HttpStatus.NO_CONTENT);
+
     }
 }
