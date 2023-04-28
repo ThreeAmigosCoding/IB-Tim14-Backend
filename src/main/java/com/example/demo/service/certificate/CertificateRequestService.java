@@ -16,4 +16,5 @@ public interface CertificateRequestService {
 
     List<CertificateRequestDTO> getAllUserRequests(Integer id);
 
+    List<CertificateRequestDTO> findAllRequests();
 }

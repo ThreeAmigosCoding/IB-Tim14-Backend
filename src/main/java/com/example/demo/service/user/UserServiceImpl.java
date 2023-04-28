@@ -62,6 +62,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
     public User activate(UserActivation activation) {
         User user = userRepository.findByEmail(activation.getUser().getEmail());
         user.setActive(true);

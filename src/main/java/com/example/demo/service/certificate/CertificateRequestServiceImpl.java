@@ -33,4 +33,10 @@ public class CertificateRequestServiceImpl implements CertificateRequestService{
         return certificateRequestRepository.findAllByOwnerId(id).stream()
                 .map(CertificateRequestDTO::new).collect(Collectors.toList());
     }
+
+    @Override
+    public List<CertificateRequestDTO> findAllRequests() {
+        return certificateRequestRepository.findAll().stream()
+                .map(CertificateRequestDTO::new).collect(Collectors.toList());
+    }
 }
