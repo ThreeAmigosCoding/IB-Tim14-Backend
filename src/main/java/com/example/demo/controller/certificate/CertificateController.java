@@ -85,6 +85,17 @@ public class CertificateController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @GetMapping(value = "/certificate-requests")
+    public ResponseEntity<?> getAllCertificateRequests() {
+        try {
+            List<CertificateRequestDTO> certificateRequestDTOS = certificateRequestService.findAllRequests();
+            return new ResponseEntity<>(certificateRequestDTOS, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorDTO(e.getMessage()), HttpStatus.NOT_FOUND);
+        }
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping(value = "/validity/{serialNumber}")
     public ResponseEntity<?> getValidity(@PathVariable BigInteger serialNumber) {
