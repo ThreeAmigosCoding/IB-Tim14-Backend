@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigInteger;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.util.List;
@@ -85,13 +86,13 @@ public class CertificateController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @GetMapping(value = "/validity/{id}")
-    public ResponseEntity<?> getValidity(@PathVariable Integer id) {
+    @GetMapping(value = "/validity/{serialNumber}")
+    public ResponseEntity<?> getValidity(@PathVariable BigInteger serialNumber) {
         try {
-            certificateService.checkValidity(id);
+            certificateService.checkValidity(serialNumber);
             return new ResponseEntity<>("Certificate is valid.", HttpStatus.OK);
         } catch (CertificateExpiredException e) {
-            return new ResponseEntity<>("Certificate is expired.", HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>("Certificate is expired.", HttpStatus.OK);
         } catch (CertificateNotYetValidException e) {
             return new ResponseEntity<>("Certificate is not yet valid.", HttpStatus.NO_CONTENT);
         } catch (Exception e){

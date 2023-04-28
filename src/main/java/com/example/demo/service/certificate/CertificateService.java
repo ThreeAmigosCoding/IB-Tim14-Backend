@@ -33,6 +33,6 @@ public interface CertificateService {
 
     List<CertificateDTO> getAllCertificates();
 
-    void checkValidity(Integer id) throws Exception;
+    void checkValidity(BigInteger serialNumber) throws Exception;
 
 }

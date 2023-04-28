@@ -200,8 +200,8 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public void checkValidity(Integer id) throws Exception {
-        Certificate certificate = certificateRepository.findById(id).orElseThrow();
+    public void checkValidity(BigInteger serialNumber) throws Exception {
+        Certificate certificate = certificateRepository.findBySerialNumber(serialNumber).orElseThrow();
         X509Certificate x509Certificate = loadCertificate(certificate.getAlias());
 
         x509Certificate.checkValidity();
