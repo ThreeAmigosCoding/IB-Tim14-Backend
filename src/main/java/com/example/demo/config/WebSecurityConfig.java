@@ -88,7 +88,8 @@ public class WebSecurityConfig {
         http.authorizeHttpRequests()
                 .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
                 .requestMatchers("/api/user/register").permitAll()
-                .requestMatchers("/api/user/login").permitAll()        // /auth/**
+                .requestMatchers("/api/user/login").permitAll()
+                .requestMatchers("/api/user/activate/{activation-id}").permitAll()// /auth/**
 
 
                 // /h2-console/** ako se koristi H2 baza)
