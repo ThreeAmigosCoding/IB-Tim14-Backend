@@ -2,11 +2,14 @@ package com.example.demo.service.certificate;
 
 import com.example.demo.dto.certificate.CertificateDTO;
 import com.example.demo.dto.certificate.CertificateRequestDTO;
+import com.example.demo.dto.certificate.DownloadDto;
 import com.example.demo.model.certificate.Certificate;
 import com.example.demo.model.certificate.CertificateRequest;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
@@ -34,5 +37,9 @@ public interface CertificateService {
     List<CertificateDTO> getAllCertificates();
 
     void checkValidity(BigInteger serialNumber) throws Exception;
+
+    void checkValidityFromCopy(MultipartFile certificate) throws Exception;
+
+    DownloadDto getCertificateForDownload(String alias) throws IOException;
 
 }

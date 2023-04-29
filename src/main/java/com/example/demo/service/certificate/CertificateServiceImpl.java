@@ -3,6 +3,7 @@ package com.example.demo.service.certificate;
 import ch.qos.logback.core.net.ssl.KeyStoreFactoryBean;
 import com.example.demo.dto.certificate.CertificateDTO;
 import com.example.demo.dto.certificate.CertificateRequestDTO;
+import com.example.demo.dto.certificate.DownloadDto;
 import com.example.demo.model.certificate.Certificate;
 import com.example.demo.model.certificate.CertificateRequest;
 import com.example.demo.model.certificate.CertificateType;
@@ -13,6 +14,7 @@ import com.example.demo.repository.certificate.CertificateRequestRepository;
 import com.example.demo.service.role.RoleService;
 import com.example.demo.service.user.UserService;
 import com.example.demo.util.TokenUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -26,12 +28,18 @@ import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -78,6 +86,9 @@ public class CertificateServiceImpl implements CertificateService {
             certificateRequest.setIssuer(certificateRepository.findById(certificateRequestDTO.getIssuerId())
                     .orElseThrow());
         }
+
+        certificateRequest.setRequestDate(LocalDate.now());
+
         certificateRequestRepository.save(certificateRequest);
         return new CertificateRequestDTO(certificateRequest);
     }
@@ -206,6 +217,32 @@ public class CertificateServiceImpl implements CertificateService {
 
         x509Certificate.checkValidity();
     }
+
+    @Override
+    public void checkValidityFromCopy(MultipartFile certificate) throws Exception {
+
+        String extension = FilenameUtils.getExtension(certificate.getOriginalFilename());
+        if (extension != null && !extension.equals("crt")){
+            throw new Exception("File type must be certificate!");
+        }
+
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        X509Certificate cert = (X509Certificate) factory.generateCertificate(certificate.getInputStream());
+
+
+        checkValidity(cert.getSerialNumber());
+    }
+
+    @Override
+    public DownloadDto getCertificateForDownload(String alias) throws IOException {
+
+        Resource resource = new FileSystemResource(certDir + "/" + alias + ".crt");
+
+        String contentType = Files.probeContentType(Paths.get(resource.getFile().getPath()));
+
+        return new DownloadDto(resource, contentType);
+    }
+
 
     private LocalDate fromDateToLocalDate(Date date) {
         LocalDateTime localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
