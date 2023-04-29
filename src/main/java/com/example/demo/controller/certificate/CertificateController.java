@@ -53,6 +53,7 @@ public class CertificateController {
             Certificate certificate = certificateService.issueCertificate(certificateRequest);
             return new ResponseEntity<>(new CertificateDTO(certificate), HttpStatus.OK);
         } catch (Exception e) {
+            e.printStackTrace();
             return new ResponseEntity<>(new ErrorDTO(e.getMessage()), HttpStatus.NOT_FOUND);
         }
     }
@@ -143,6 +144,7 @@ public class CertificateController {
                             downloadDto.getDownloadResource().getFilename() + "\"")
                     .body(downloadDto.getDownloadResource());
         } catch (IOException e) {
+            e.printStackTrace();
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }

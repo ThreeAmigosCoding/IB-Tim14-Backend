@@ -43,6 +43,6 @@ INSERT INTO CERTIFICATES (alias, flags, serial_number, signature_algorithm, cert
                           '2024-04-04', 1, null, 1);
 
 INSERT INTO CERTIFICATE_REQUESTS (approved, flags, request_date, signature_algorithm, certificate_type, issuer_id, owner_id) VALUES
-    (false, '1,2,3,4,5,6,7', '2023-04-04', 'SHA256withRSA', 'END', 1, 1);
+    (false, '1,2,3,4,5,6,7', '2023-04-28', 'SHA256withRSA', 'END', 1, 1);
 INSERT INTO CERTIFICATE_REQUESTS (approved, flags, request_date, signature_algorithm, certificate_type, issuer_id, owner_id) VALUES
-    (null, '1,2,3,4,5,6,7', '2023-04-04', 'SHA256withRSA', 'END', 1, 1);
+    (null, '1,2,3,4,5,6,7', '2023-04-28', 'SHA256withRSA', 'END', 1, 1);
