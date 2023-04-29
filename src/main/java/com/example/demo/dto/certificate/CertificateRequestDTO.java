@@ -7,6 +7,7 @@ import java.time.LocalDate;
 
 public class CertificateRequestDTO {
 
+    private Integer id;
     private String signatureAlgorithm;
     private Integer issuerId;
     private LocalDate requestDate;
@@ -19,8 +20,9 @@ public class CertificateRequestDTO {
 
     public CertificateRequestDTO() { }
 
-    public CertificateRequestDTO(String signatureAlgorithm, Integer issuerId, LocalDate requestDate,
+    public CertificateRequestDTO(Integer id, String signatureAlgorithm, Integer issuerId, LocalDate requestDate,
                                  CertificateType type, Integer ownerId, Boolean approved, String flags) {
+        this.id = id;
         this.signatureAlgorithm = signatureAlgorithm;
         this.issuerId = issuerId;
         this.requestDate = requestDate;
@@ -31,6 +33,7 @@ public class CertificateRequestDTO {
     }
 
     public CertificateRequestDTO(CertificateRequest certificateRequest) {
+        this.id = certificateRequest.getId();
         this.signatureAlgorithm = certificateRequest.getSignatureAlgorithm();
         if (certificateRequest.getIssuer() != null)
             this.issuerId = certificateRequest.getIssuer().getId();
@@ -44,6 +47,14 @@ public class CertificateRequestDTO {
     // endregion
 
     // region Getters and Setters
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
     public String getSignatureAlgorithm() {
         return signatureAlgorithm;
