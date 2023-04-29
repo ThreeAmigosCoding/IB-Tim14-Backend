@@ -14,6 +14,7 @@ import com.example.demo.repository.certificate.CertificateRequestRepository;
 import com.example.demo.service.role.RoleService;
 import com.example.demo.service.user.UserService;
 import com.example.demo.util.TokenUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -219,10 +220,15 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public void checkValidityFromCopy(MultipartFile certificate) throws Exception {
+
+        String extension = FilenameUtils.getExtension(certificate.getOriginalFilename());
+        if (extension != null && !extension.equals("crt")){
+            throw new Exception("File type must be certificate!");
+        }
+
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         X509Certificate cert = (X509Certificate) factory.generateCertificate(certificate.getInputStream());
 
-        System.out.println(cert.getSerialNumber());
 
         checkValidity(cert.getSerialNumber());
     }
