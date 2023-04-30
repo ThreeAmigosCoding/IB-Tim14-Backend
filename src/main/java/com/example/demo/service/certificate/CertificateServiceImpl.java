@@ -49,6 +49,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -97,7 +98,8 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Certificate issueCertificate(CertificateRequest certificateRequest) throws Exception {
+    public Certificate issueCertificate(CertificateRequest certificateRequest, Integer userId) throws Exception {
+        this.validateCertificateCreation(certificateRequest.getId(), userId);
         return generateCertificate(certificateRequest);
     }
 
@@ -185,12 +187,14 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public BigInteger generateSerialNumber() {
-        byte[] bytes = new byte[16];
-        UUID uuid = UUID.randomUUID();
-        ByteBuffer.wrap(bytes)
-                .putLong(uuid.getMostSignificantBits())
-                .putLong(uuid.getLeastSignificantBits());
-        return new BigInteger(bytes);
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            String uuid = java.util.UUID.randomUUID().toString();
+            byte[] hash = md.digest(uuid.getBytes());
+            return new BigInteger(1, hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -244,6 +248,17 @@ public class CertificateServiceImpl implements CertificateService {
         String contentType = Files.probeContentType(Paths.get(resource.getFile().getPath()));
 
         return new DownloadDto(resource, contentType);
+    }
+
+    @Override
+    public void validateCertificateCreation(Integer userId, Integer requestId) throws Exception {
+        CertificateRequest request = this.certificateRequestRepository.findById(requestId)
+                .orElseThrow(() -> new Exception("Request does not exist!"));
+        Role admin = roleService.findByName("ROLE_ADMIN");
+        User user = userService.findById(userId)
+                .orElseThrow(() -> new Exception("User does not exist!"));
+        if (!user.getAuthorities().contains(admin) || !Objects.equals(request.getIssuer().getOwner().getId(), userId))
+            throw new Exception("You can not approve this request!");
     }
 
 

@@ -45,11 +45,12 @@ public class CertificateController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PostMapping(value = "/create-certificate/{id}")
-    public ResponseEntity<?> createCertificate(@PathVariable Integer id) {
+    @PostMapping(value = "/create-certificate/{user-id}/{request-id}")
+    public ResponseEntity<?> createCertificate(@PathVariable("user-id") Integer userId,
+                                               @PathVariable("request-id") Integer requestId) {
         try {
-            CertificateRequest certificateRequest = certificateRequestService.findById(id);
-            Certificate certificate = certificateService.issueCertificate(certificateRequest);
+            CertificateRequest certificateRequest = certificateRequestService.findById(requestId);
+            Certificate certificate = certificateService.issueCertificate(certificateRequest, userId);
             return new ResponseEntity<>(new CertificateDTO(certificate), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
