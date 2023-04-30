@@ -22,8 +22,8 @@ public class CertificateRequestServiceImpl implements CertificateRequestService{
     }
 
     @Override
-    public CertificateRequestDTO rejectCertificateRequest(Integer id) {
-        CertificateRequest certificateRequest = certificateRequestRepository.findById(id).orElseThrow();
+    public CertificateRequestDTO rejectCertificateRequest(Integer userId, Integer requestId) {
+        CertificateRequest certificateRequest = certificateRequestRepository.findById(requestId).orElseThrow();
         certificateRequest.setApproved(false);
         return new CertificateRequestDTO(certificateRequestRepository.save(certificateRequest));
     }

@@ -73,6 +73,7 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public CertificateRequestDTO createRequest(CertificateRequestDTO certificateRequestDTO) throws Exception {
         CertificateRequest certificateRequest = new CertificateRequest(certificateRequestDTO);
+        certificateRequest.setApproved(null);
         certificateRequest.setOwner(userService.findById(certificateRequestDTO.getOwnerId()).orElseThrow());
         certificateRequest.setRequestDate(LocalDate.now());
         Role admin = roleService.findByName("ROLE_ADMIN");
@@ -83,14 +84,16 @@ public class CertificateServiceImpl implements CertificateService {
 
         Certificate issuer = null;
         if (!certificateRequest.getType().equals(CertificateType.ROOT))
-               issuer = certificateRepository.findById(certificateRequestDTO.getIssuerId()).orElseThrow();
+               issuer = certificateRepository.findBySerialNumber(certificateRequestDTO.getIssuerSerialNumber()).orElseThrow();
 
         certificateRequest.setIssuer(issuer);
 
         if (certificateRequest.getOwner().getAuthorities().contains(admin) ||
                 (issuer != null && certificateRequest.getOwner().equals(issuer.getOwner()))) {
             certificateRequest.setApproved(true);
+            certificateRequestRepository.save(certificateRequest);
             this.generateCertificate(certificateRequest);
+            return new CertificateRequestDTO(certificateRequest);
         }
 
         certificateRequestRepository.save(certificateRequest);
@@ -187,14 +190,10 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public BigInteger generateSerialNumber() {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            String uuid = java.util.UUID.randomUUID().toString();
-            byte[] hash = md.digest(uuid.getBytes());
-            return new BigInteger(1, hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        SecureRandom random = new SecureRandom();
+        byte[] serialNumberBytes = new byte[8];
+        random.nextBytes(serialNumberBytes);
+        return new BigInteger(1, serialNumberBytes);
     }
 
     @Override

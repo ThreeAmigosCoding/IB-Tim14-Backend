@@ -59,10 +59,13 @@ public class CertificateController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PutMapping(value = "/reject-certificate/{id}")
-    public ResponseEntity<?> rejectCertificateRequest(@PathVariable Integer id) {
+    @PutMapping(value = "/reject-certificate/{user-id}/{request-id}")
+    public ResponseEntity<?> rejectCertificateRequest(@PathVariable("user-id") Integer userId,
+                                                      @PathVariable("request-id") Integer requestId) {
+
+        //TODO VALIDIRATI KO MOZE DA ODBIJE REQUEST KAO STO JE VALIDIRANO KOD PRIHVATANJA
         try {
-            CertificateRequestDTO certificateRequestDTO = certificateRequestService.rejectCertificateRequest(id);
+            CertificateRequestDTO certificateRequestDTO = certificateRequestService.rejectCertificateRequest(userId, requestId);
             return new ResponseEntity<>(certificateRequestDTO, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorDTO(e.getMessage()), HttpStatus.NOT_FOUND);
