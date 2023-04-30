@@ -22,7 +22,6 @@ import java.math.BigInteger;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @CrossOrigin

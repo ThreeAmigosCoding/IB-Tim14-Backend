@@ -73,21 +73,24 @@ public class CertificateServiceImpl implements CertificateService {
     public CertificateRequestDTO createRequest(CertificateRequestDTO certificateRequestDTO) throws Exception {
         CertificateRequest certificateRequest = new CertificateRequest(certificateRequestDTO);
         certificateRequest.setOwner(userService.findById(certificateRequestDTO.getOwnerId()).orElseThrow());
-        Role admin = roleService.findByName("ROLE_ADMIN");
-        if (certificateRequest.getType() == CertificateType.ROOT &&
-                certificateRequest.getOwner().getAuthorities().contains(admin)) {
-            certificateRequest.setIssuer(null);
-        }
-        else if (certificateRequest.getType() == CertificateType.ROOT &&
-                !certificateRequest.getOwner().getAuthorities().contains(admin)) {
-            throw new Exception("No permission for this certificate type.");
-        }
-        else {
-            certificateRequest.setIssuer(certificateRepository.findById(certificateRequestDTO.getIssuerId())
-                    .orElseThrow());
-        }
-
         certificateRequest.setRequestDate(LocalDate.now());
+        Role admin = roleService.findByName("ROLE_ADMIN");
+
+        if (certificateRequest.getType().equals(CertificateType.ROOT) &&
+                !certificateRequest.getOwner().getAuthorities().contains(admin))
+            throw new Exception("No permission for this certificate type.");
+
+        Certificate issuer = null;
+        if (!certificateRequest.getType().equals(CertificateType.ROOT))
+               issuer = certificateRepository.findById(certificateRequestDTO.getIssuerId()).orElseThrow();
+
+        certificateRequest.setIssuer(issuer);
+
+        if (certificateRequest.getOwner().getAuthorities().contains(admin) ||
+                (issuer != null && certificateRequest.getOwner().equals(issuer.getOwner()))) {
+            certificateRequest.setApproved(true);
+            this.generateCertificate(certificateRequest);
+        }
 
         certificateRequestRepository.save(certificateRequest);
         return new CertificateRequestDTO(certificateRequest);
