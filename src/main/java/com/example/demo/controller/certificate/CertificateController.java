@@ -121,7 +121,7 @@ public class CertificateController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @GetMapping(value = "/validity")
+    @PutMapping(value = "/validity")
     public ResponseEntity<?> getValidityFromCopy(@RequestParam("certificate") MultipartFile certificate){
         try {
             certificateService.checkValidityFromCopy(certificate);

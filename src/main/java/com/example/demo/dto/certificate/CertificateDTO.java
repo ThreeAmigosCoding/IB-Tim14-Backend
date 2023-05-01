@@ -4,6 +4,7 @@ import com.example.demo.dto.user.UserDTO;
 import com.example.demo.model.certificate.Certificate;
 import com.example.demo.model.certificate.CertificateRequest;
 import com.example.demo.model.certificate.CertificateType;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -11,6 +12,8 @@ import java.time.LocalDate;
 public class CertificateDTO {
 
     private Integer id;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigInteger serialNumber;
     private String signatureAlgorithm;
     private String issuerAlias;
