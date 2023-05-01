@@ -3,6 +3,7 @@ package com.example.demo.dto.certificate;
 import com.example.demo.model.certificate.CertificateRequest;
 import com.example.demo.model.certificate.CertificateType;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 
 public class CertificateRequestDTO {
@@ -10,9 +11,12 @@ public class CertificateRequestDTO {
     private Integer id;
     private String signatureAlgorithm;
     private Integer issuerId;
+    private Integer issuerOwnerId;
+    private BigInteger issuerSerialNumber;
     private LocalDate requestDate;
     private CertificateType type;
     private Integer ownerId;
+    private String ownerName;
     private Boolean approved;
     private String flags;
 
@@ -20,14 +24,18 @@ public class CertificateRequestDTO {
 
     public CertificateRequestDTO() { }
 
-    public CertificateRequestDTO(Integer id, String signatureAlgorithm, Integer issuerId, LocalDate requestDate,
-                                 CertificateType type, Integer ownerId, Boolean approved, String flags) {
+    public CertificateRequestDTO(Integer id, String signatureAlgorithm, Integer issuerId, Integer issuerOwnerId,
+                                 BigInteger issuerSerialNumber, LocalDate requestDate, CertificateType type,
+                                 Integer ownerId, String ownerName, Boolean approved, String flags) {
         this.id = id;
         this.signatureAlgorithm = signatureAlgorithm;
         this.issuerId = issuerId;
+        this.issuerOwnerId = issuerOwnerId;
+        this.issuerSerialNumber = issuerSerialNumber;
         this.requestDate = requestDate;
         this.type = type;
         this.ownerId = ownerId;
+        this.ownerName = ownerName;
         this.approved = approved;
         this.flags = flags;
     }
@@ -35,11 +43,15 @@ public class CertificateRequestDTO {
     public CertificateRequestDTO(CertificateRequest certificateRequest) {
         this.id = certificateRequest.getId();
         this.signatureAlgorithm = certificateRequest.getSignatureAlgorithm();
-        if (certificateRequest.getIssuer() != null)
+        if (certificateRequest.getIssuer() != null) {
             this.issuerId = certificateRequest.getIssuer().getId();
+            this.issuerOwnerId = certificateRequest.getIssuer().getOwner().getId();
+            this.issuerSerialNumber = certificateRequest.getIssuer().getSerialNumber();
+        }
         this.requestDate = certificateRequest.getRequestDate();
         this.type = certificateRequest.getType();
         this.ownerId = certificateRequest.getOwner().getId();
+        this.ownerName = certificateRequest.getOwner().getName() + " " + certificateRequest.getOwner().getSurname();
         this.approved = certificateRequest.isApproved();
         this.flags = certificateRequest.getFlags();
     }
@@ -72,6 +84,22 @@ public class CertificateRequestDTO {
         this.issuerId = issuerId;
     }
 
+    public Integer getIssuerOwnerId() {
+        return issuerOwnerId;
+    }
+
+    public void setIssuerOwnerId(Integer issuerOwnerId) {
+        this.issuerOwnerId = issuerOwnerId;
+    }
+
+    public BigInteger getIssuerSerialNumber() {
+        return issuerSerialNumber;
+    }
+
+    public void setIssuerSerialNumber(BigInteger issuerSerialNumber) {
+        this.issuerSerialNumber = issuerSerialNumber;
+    }
+
     public LocalDate getRequestDate() {
         return requestDate;
     }
@@ -94,6 +122,14 @@ public class CertificateRequestDTO {
 
     public void setOwnerId(Integer ownerId) {
         this.ownerId = ownerId;
+    }
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
     }
 
     public Boolean getApproved() {

@@ -12,7 +12,7 @@ public interface CertificateRequestService {
 
     CertificateRequest findById(Integer id);
 
-    CertificateRequestDTO rejectCertificateRequest(Integer id);
+    CertificateRequestDTO rejectCertificateRequest(Integer userId, Integer requestId);
 
     List<CertificateRequestDTO> getAllUserRequests(Integer id);
 

@@ -49,6 +49,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -72,29 +73,36 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public CertificateRequestDTO createRequest(CertificateRequestDTO certificateRequestDTO) throws Exception {
         CertificateRequest certificateRequest = new CertificateRequest(certificateRequestDTO);
+        certificateRequest.setApproved(null);
         certificateRequest.setOwner(userService.findById(certificateRequestDTO.getOwnerId()).orElseThrow());
-        Role admin = roleService.findByName("ROLE_ADMIN");
-        if (certificateRequest.getType() == CertificateType.ROOT &&
-                certificateRequest.getOwner().getAuthorities().contains(admin)) {
-            certificateRequest.setIssuer(null);
-        }
-        else if (certificateRequest.getType() == CertificateType.ROOT &&
-                !certificateRequest.getOwner().getAuthorities().contains(admin)) {
-            throw new Exception("No permission for this certificate type.");
-        }
-        else {
-            certificateRequest.setIssuer(certificateRepository.findById(certificateRequestDTO.getIssuerId())
-                    .orElseThrow());
-        }
-
         certificateRequest.setRequestDate(LocalDate.now());
+        Role admin = roleService.findByName("ROLE_ADMIN");
+
+        if (certificateRequest.getType().equals(CertificateType.ROOT) &&
+                !certificateRequest.getOwner().getAuthorities().contains(admin))
+            throw new Exception("No permission for this certificate type.");
+
+        Certificate issuer = null;
+        if (!certificateRequest.getType().equals(CertificateType.ROOT))
+               issuer = certificateRepository.findBySerialNumber(certificateRequestDTO.getIssuerSerialNumber()).orElseThrow();
+
+        certificateRequest.setIssuer(issuer);
+
+        if (certificateRequest.getOwner().getAuthorities().contains(admin) ||
+                (issuer != null && certificateRequest.getOwner().equals(issuer.getOwner()))) {
+            certificateRequest.setApproved(true);
+            certificateRequestRepository.save(certificateRequest);
+            this.generateCertificate(certificateRequest);
+            return new CertificateRequestDTO(certificateRequest);
+        }
 
         certificateRequestRepository.save(certificateRequest);
         return new CertificateRequestDTO(certificateRequest);
     }
 
     @Override
-    public Certificate issueCertificate(CertificateRequest certificateRequest) throws Exception {
+    public Certificate issueCertificate(CertificateRequest certificateRequest, Integer userId) throws Exception {
+        this.validateCertificateCreation(certificateRequest.getId(), userId);
         return generateCertificate(certificateRequest);
     }
 
@@ -182,12 +190,10 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public BigInteger generateSerialNumber() {
-        byte[] bytes = new byte[16];
-        UUID uuid = UUID.randomUUID();
-        ByteBuffer.wrap(bytes)
-                .putLong(uuid.getMostSignificantBits())
-                .putLong(uuid.getLeastSignificantBits());
-        return new BigInteger(bytes);
+        SecureRandom random = new SecureRandom();
+        byte[] serialNumberBytes = new byte[8];
+        random.nextBytes(serialNumberBytes);
+        return new BigInteger(1, serialNumberBytes);
     }
 
     @Override
@@ -241,6 +247,17 @@ public class CertificateServiceImpl implements CertificateService {
         String contentType = Files.probeContentType(Paths.get(resource.getFile().getPath()));
 
         return new DownloadDto(resource, contentType);
+    }
+
+    @Override
+    public void validateCertificateCreation(Integer userId, Integer requestId) throws Exception {
+        CertificateRequest request = this.certificateRequestRepository.findById(requestId)
+                .orElseThrow(() -> new Exception("Request does not exist!"));
+        Role admin = roleService.findByName("ROLE_ADMIN");
+        User user = userService.findById(userId)
+                .orElseThrow(() -> new Exception("User does not exist!"));
+        if (!user.getAuthorities().contains(admin) || !Objects.equals(request.getIssuer().getOwner().getId(), userId))
+            throw new Exception("You can not approve this request!");
     }
 
 

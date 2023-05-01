@@ -22,7 +22,6 @@ import java.math.BigInteger;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @CrossOrigin
@@ -46,11 +45,12 @@ public class CertificateController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PostMapping(value = "/create-certificate/{id}")
-    public ResponseEntity<?> createCertificate(@PathVariable Integer id) {
+    @PostMapping(value = "/create-certificate/{user-id}/{request-id}")
+    public ResponseEntity<?> createCertificate(@PathVariable("user-id") Integer userId,
+                                               @PathVariable("request-id") Integer requestId) {
         try {
-            CertificateRequest certificateRequest = certificateRequestService.findById(id);
-            Certificate certificate = certificateService.issueCertificate(certificateRequest);
+            CertificateRequest certificateRequest = certificateRequestService.findById(requestId);
+            Certificate certificate = certificateService.issueCertificate(certificateRequest, userId);
             return new ResponseEntity<>(new CertificateDTO(certificate), HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
@@ -59,10 +59,13 @@ public class CertificateController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PutMapping(value = "/reject-certificate/{id}")
-    public ResponseEntity<?> rejectCertificateRequest(@PathVariable Integer id) {
+    @PutMapping(value = "/reject-certificate/{user-id}/{request-id}")
+    public ResponseEntity<?> rejectCertificateRequest(@PathVariable("user-id") Integer userId,
+                                                      @PathVariable("request-id") Integer requestId) {
+
+        //TODO VALIDIRATI KO MOZE DA ODBIJE REQUEST KAO STO JE VALIDIRANO KOD PRIHVATANJA
         try {
-            CertificateRequestDTO certificateRequestDTO = certificateRequestService.rejectCertificateRequest(id);
+            CertificateRequestDTO certificateRequestDTO = certificateRequestService.rejectCertificateRequest(userId, requestId);
             return new ResponseEntity<>(certificateRequestDTO, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorDTO(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -118,7 +121,7 @@ public class CertificateController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @GetMapping(value = "/validity")
+    @PutMapping(value = "/validity")
     public ResponseEntity<?> getValidityFromCopy(@RequestParam("certificate") MultipartFile certificate){
         try {
             certificateService.checkValidityFromCopy(certificate);
