@@ -3,6 +3,7 @@ package com.example.demo.service.certificate;
 import com.example.demo.dto.certificate.CertificateDTO;
 import com.example.demo.dto.certificate.CertificateRequestDTO;
 import com.example.demo.dto.certificate.DownloadDto;
+import com.example.demo.dto.certificate.RevocationRequestDto;
 import com.example.demo.model.certificate.Certificate;
 import com.example.demo.model.certificate.CertificateRequest;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -43,5 +44,9 @@ public interface CertificateService {
     DownloadDto getCertificateForDownload(String alias) throws IOException;
 
     void validateCertificateCreation(Integer userId, Integer requestId) throws Exception;
+
+    void revokeCertificateChain(Integer revocationRequestId, Integer userId) throws Exception;
+
+    RevocationRequestDto createRevocationRequest(RevocationRequestDto revocationRequestDto, Integer userId) throws Exception;
 
 }

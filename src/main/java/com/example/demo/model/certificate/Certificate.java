@@ -31,7 +31,7 @@ public class Certificate {
     private LocalDate validTo;
 
     @Column
-    private Boolean valid;
+    private Boolean revoked;
 
     @Enumerated(value = EnumType.STRING)
     @Column(name = "certificate_type")
@@ -56,7 +56,7 @@ public class Certificate {
     public Certificate() { }
 
     public Certificate(Integer id, BigInteger serialNumber, String signatureAlgorithm, Certificate issuer,
-                       LocalDate validFrom, LocalDate validTo, Boolean valid, CertificateType type,
+                       LocalDate validFrom, LocalDate validTo, Boolean revoked, CertificateType type,
                        User owner, String alias, CertificateRequest certificateRequest, String flags) {
         this.id = id;
         this.serialNumber = serialNumber;
@@ -64,7 +64,7 @@ public class Certificate {
         this.issuer = issuer;
         this.validFrom = validFrom;
         this.validTo = validTo;
-        this.valid = valid;
+        this.revoked = revoked;
         this.type = type;
         this.owner = owner;
         this.alias = alias;
@@ -84,7 +84,7 @@ public class Certificate {
         this.serialNumber = serialNumber;
         this.validFrom = validFrom;
         this.validTo = validTo;
-        this.valid = true;
+        this.revoked = true;
     }
 
     // endregion
@@ -139,12 +139,12 @@ public class Certificate {
         this.validTo = validTo;
     }
 
-    public Boolean isValid() {
-        return valid;
+    public Boolean isRevoked() {
+        return revoked;
     }
 
-    public void setValid(Boolean valid) {
-        this.valid = valid;
+    public void setRevoked(Boolean revoked) {
+        this.revoked = revoked;
     }
 
     public CertificateType getType() {
@@ -179,8 +179,8 @@ public class Certificate {
         this.certificateRequest = certificateRequest;
     }
 
-    public Boolean getValid() {
-        return valid;
+    public Boolean getRevoked() {
+        return revoked;
     }
 
     public String getFlags() {

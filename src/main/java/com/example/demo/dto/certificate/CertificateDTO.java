@@ -2,7 +2,6 @@ package com.example.demo.dto.certificate;
 
 import com.example.demo.dto.user.UserDTO;
 import com.example.demo.model.certificate.Certificate;
-import com.example.demo.model.certificate.CertificateRequest;
 import com.example.demo.model.certificate.CertificateType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -19,7 +18,7 @@ public class CertificateDTO {
     private String issuerAlias;
     private LocalDate validFrom;
     private LocalDate validTo;
-    private Boolean valid;
+    private Boolean revoked;
     private CertificateType type;
     private UserDTO owner;
     private String alias;
@@ -30,7 +29,7 @@ public class CertificateDTO {
     public CertificateDTO() {}
 
     public CertificateDTO(Integer id, BigInteger serialNumber, String signatureAlgorithm, String issuerAlias,
-                          LocalDate validFrom, LocalDate validTo, Boolean valid, CertificateType type, UserDTO owner,
+                          LocalDate validFrom, LocalDate validTo, Boolean revoked, CertificateType type, UserDTO owner,
                           String alias, String flags) {
         this.id = id;
         this.serialNumber = serialNumber;
@@ -38,7 +37,7 @@ public class CertificateDTO {
         this.issuerAlias = issuerAlias;
         this.validFrom = validFrom;
         this.validTo = validTo;
-        this.valid = valid;
+        this.revoked = revoked;
         this.type = type;
         this.owner = owner;
         this.alias = alias;
@@ -53,7 +52,7 @@ public class CertificateDTO {
             this.issuerAlias = certificate.getIssuer().getAlias();
         this.validFrom = certificate.getValidFrom();
         this.validTo = certificate.getValidTo();
-        this.valid = certificate.getValid();
+        this.revoked = certificate.getRevoked();
         this.type = certificate.getType();
         this.owner = new UserDTO(certificate.getOwner());
         this.alias = certificate.getAlias();
@@ -113,12 +112,12 @@ public class CertificateDTO {
         this.validTo = validTo;
     }
 
-    public Boolean getValid() {
-        return valid;
+    public Boolean getRevoked() {
+        return revoked;
     }
 
-    public void setValid(Boolean valid) {
-        this.valid = valid;
+    public void setRevoked(Boolean revoked) {
+        this.revoked = revoked;
     }
 
     public CertificateType getType() {
