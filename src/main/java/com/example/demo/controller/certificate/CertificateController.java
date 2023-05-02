@@ -63,7 +63,7 @@ public class CertificateController {
     public ResponseEntity<?> rejectCertificateRequest(@PathVariable("user-id") Integer userId,
                                                       @PathVariable("request-id") Integer requestId) {
 
-        //TODO VALIDIRATI KO MOZE DA ODBIJE REQUEST KAO STO JE VALIDIRANO KOD PRIHVATANJA
+        //TODO Validirano, proveriti da li je to to
         try {
             CertificateRequestDTO certificateRequestDTO = certificateRequestService.rejectCertificateRequest(userId, requestId);
             return new ResponseEntity<>(certificateRequestDTO, HttpStatus.OK);
