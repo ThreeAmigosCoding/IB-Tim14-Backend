@@ -4,10 +4,12 @@ import com.example.demo.dto.ErrorDTO;
 import com.example.demo.dto.certificate.CertificateDTO;
 import com.example.demo.dto.certificate.CertificateRequestDTO;
 import com.example.demo.dto.certificate.DownloadDto;
+import com.example.demo.dto.certificate.RevocationRequestDto;
 import com.example.demo.model.certificate.Certificate;
 import com.example.demo.model.certificate.CertificateRequest;
 import com.example.demo.service.certificate.CertificateRequestService;
 import com.example.demo.service.certificate.CertificateService;
+import com.example.demo.service.certificate.RevocationRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,9 @@ public class CertificateController {
 
     @Autowired
     private CertificateRequestService certificateRequestService;
+
+    @Autowired
+    private RevocationRequestService revocationRequestService;
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping(value = "/create-request", consumes = "application/json")
@@ -149,6 +154,40 @@ public class CertificateController {
         } catch (IOException e) {
             e.printStackTrace();
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PostMapping("/revocation/{requestId}/{userId}")
+    public ResponseEntity<?> acceptRevocationRequest(@PathVariable Integer requestId, @PathVariable Integer userId){
+        try {
+            certificateService.revokeCertificateChain(requestId, userId);
+            return new ResponseEntity<>("Certificate chain revoked!", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PutMapping("/revocation/{requestId}/{userId}")
+    public ResponseEntity<?> rejectRevocationRequest(@PathVariable Integer requestId, @PathVariable Integer userId){
+        try {
+            return new ResponseEntity<>(revocationRequestService.rejectRevocationRequest(userId, requestId),
+                    HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PostMapping("/revocation/create/{userId}")
+    public ResponseEntity<?> createRevocationRequest(@RequestBody RevocationRequestDto revocationRequestDto,
+                                                     @PathVariable Integer userId){
+        try {
+            return new ResponseEntity<>(certificateService.createRevocationRequest(revocationRequestDto, userId),
+                    HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
 

@@ -1,19 +1,20 @@
 package com.example.demo.service.certificate;
 
-import ch.qos.logback.core.net.ssl.KeyStoreFactoryBean;
 import com.example.demo.dto.certificate.CertificateDTO;
 import com.example.demo.dto.certificate.CertificateRequestDTO;
 import com.example.demo.dto.certificate.DownloadDto;
+import com.example.demo.dto.certificate.RevocationRequestDto;
 import com.example.demo.model.certificate.Certificate;
 import com.example.demo.model.certificate.CertificateRequest;
 import com.example.demo.model.certificate.CertificateType;
+import com.example.demo.model.certificate.RevocationRequest;
 import com.example.demo.model.user.Role;
 import com.example.demo.model.user.User;
 import com.example.demo.repository.certificate.CertificateRepository;
 import com.example.demo.repository.certificate.CertificateRequestRepository;
+import com.example.demo.repository.certificate.RevocationRequestRepository;
 import com.example.demo.service.role.RoleService;
 import com.example.demo.service.user.UserService;
-import com.example.demo.util.TokenUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -24,7 +25,6 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
@@ -50,7 +49,6 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -68,6 +66,9 @@ public class CertificateServiceImpl implements CertificateService {
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private RevocationRequestRepository revocationRequestRepository;
+
     private static final String certDir = "src/certificates";
 
     @Override
@@ -83,8 +84,11 @@ public class CertificateServiceImpl implements CertificateService {
             throw new Exception("No permission for this certificate type.");
 
         Certificate issuer = null;
-        if (!certificateRequest.getType().equals(CertificateType.ROOT))
-               issuer = certificateRepository.findBySerialNumber(certificateRequestDTO.getIssuerSerialNumber()).orElseThrow();
+        if (!certificateRequest.getType().equals(CertificateType.ROOT)){
+            issuer = certificateRepository.findBySerialNumber(certificateRequestDTO.getIssuerSerialNumber())
+                    .orElseThrow();
+            checkValidity(issuer.getSerialNumber());
+        }
 
         certificateRequest.setIssuer(issuer);
 
@@ -102,7 +106,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Certificate issueCertificate(CertificateRequest certificateRequest, Integer userId) throws Exception {
-        this.validateCertificateCreation(certificateRequest.getId(), userId);
+        this.validateCertificateCreation(userId, certificateRequest.getId());
         return generateCertificate(certificateRequest);
     }
 
@@ -154,6 +158,7 @@ public class CertificateServiceImpl implements CertificateService {
         Certificate certificate = new Certificate(certificateRequest, alias, serialNumber, fromDateToLocalDate(from),
                 fromDateToLocalDate(to));
 
+        certificate.setRevoked(false);
         certificateRepository.save(certificate);
         certificateRequest.setApproved(true);
         certificateRequestRepository.save(certificateRequest);
@@ -221,6 +226,8 @@ public class CertificateServiceImpl implements CertificateService {
         Certificate certificate = certificateRepository.findBySerialNumber(serialNumber).orElseThrow();
         X509Certificate x509Certificate = loadCertificate(certificate.getAlias());
 
+        if (certificate.isRevoked()) throw new Exception("Issuer certificate is not valid!");
+
         x509Certificate.checkValidity();
     }
 
@@ -256,10 +263,73 @@ public class CertificateServiceImpl implements CertificateService {
         Role admin = roleService.findByName("ROLE_ADMIN");
         User user = userService.findById(userId)
                 .orElseThrow(() -> new Exception("User does not exist!"));
-        if (!user.getAuthorities().contains(admin) || !Objects.equals(request.getIssuer().getOwner().getId(), userId))
+        if (!user.getAuthorities().contains(admin) || (request.getIssuer() != null
+                && !Objects.equals(request.getIssuer().getOwner().getId(), userId)))
             throw new Exception("You can not approve this request!");
     }
 
+    @Override
+    public void revokeCertificateChain(Integer revocationRequestId, Integer userId) throws Exception {
+        RevocationRequest request = revocationRequestRepository.findById(revocationRequestId).orElseThrow(
+                () -> new Exception("Revocation request doesn't exist!")
+        );
+
+        validateRevocation(userId, request.getIssuer());
+
+        revokeAllInChain(request.getRevocationCertificate());
+        request.setApproved(true);
+        revocationRequestRepository.save(request);
+    }
+
+    @Override
+    public RevocationRequestDto createRevocationRequest(RevocationRequestDto revocationRequestDto, Integer userId) throws Exception {
+        RevocationRequest revocationRequest = new RevocationRequest();
+        revocationRequest.setRequestDate(LocalDate.now());
+        revocationRequest.setReason(revocationRequestDto.getReason());
+
+        Certificate revocationCertificate = certificateRepository.findById(revocationRequestDto
+                .getRevocationCertificateId()).orElseThrow(() -> new Exception("Revocation certificate doesn't exist!"));
+        revocationRequest.setRevocationCertificate(revocationCertificate);
+
+        validateRevocation(userId, revocationCertificate);
+
+        Certificate issuer = certificateRepository.findById(revocationCertificate.getIssuer().getId())
+                .orElseThrow(() -> new Exception("Issuer certificate doesn't exist!"));
+        revocationRequest.setIssuer(issuer);
+
+        User user = userService.findById(userId).orElseThrow(() -> new Exception("User doesn't exist!"));
+
+        if (user.getAuthorities().contains(roleService.findByName("ROLE_ADMIN")) ||
+                (issuer != null && issuer.getOwner().equals(revocationCertificate.getOwner()))) {
+            revocationRequest.setApproved(true);
+            revocationRequestRepository.save(revocationRequest);
+            revokeAllInChain(revocationCertificate);
+            return new RevocationRequestDto(revocationRequest);
+        }
+
+        return new RevocationRequestDto(revocationRequestRepository.save(revocationRequest));
+    }
+
+    private void validateRevocation(Integer userId, Certificate certificate) throws Exception {
+        User user = userService.findById(userId).orElseThrow(() -> new Exception("User doesn't exist!"));
+        if (!user.getAuthorities().contains(roleService.findByName("ROLE_ADMIN")) &&
+                !Objects.equals(userId, certificate.getOwner().getId()))
+            throw new Exception("You are not allowed to revoke this certificate!");
+    }
+
+    private void revokeAllInChain(Certificate certificate){
+        //Potencijalno promentiti da bude neki enum da se zna da li je revoked
+        certificate.setRevoked(true);
+        certificateRepository.save(certificate);
+
+        List<Certificate> childCertificates = certificateRepository.findAllByIssuer(certificate);
+        if (certificate.getType().equals(CertificateType.END) || childCertificates.isEmpty())
+            return;
+
+        for (Certificate childCertificate: childCertificates){
+            revokeAllInChain(childCertificate);
+        }
+    }
 
     private LocalDate fromDateToLocalDate(Date date) {
         LocalDateTime localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
