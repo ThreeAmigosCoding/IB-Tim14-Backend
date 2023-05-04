@@ -99,7 +99,7 @@ public class CertificateController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping(value = "/certificate-requests")
     public ResponseEntity<?> getAllCertificateRequests() {
         try {

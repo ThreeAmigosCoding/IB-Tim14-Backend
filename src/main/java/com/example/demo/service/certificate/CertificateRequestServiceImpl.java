@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,9 +46,10 @@ public class CertificateRequestServiceImpl implements CertificateRequestService{
         Role admin = roleService.findByName("ROLE_ADMIN");
         User user = userService.findById(userId)
                 .orElseThrow(() -> new Exception("User does not exist!"));
-        if (!user.getAuthorities().contains(admin) || !Objects.equals(request.getIssuer().getOwner().getId(), userId))
+        if (user.getAuthorities().contains(admin))
+            return request;
+        if (request.getIssuer() != null && !Objects.equals(request.getIssuer().getOwner().getId(), userId))
             throw new Exception("You can not reject this request!");
-
         return request;
     }
 

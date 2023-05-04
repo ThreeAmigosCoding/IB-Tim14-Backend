@@ -263,8 +263,9 @@ public class CertificateServiceImpl implements CertificateService {
         Role admin = roleService.findByName("ROLE_ADMIN");
         User user = userService.findById(userId)
                 .orElseThrow(() -> new Exception("User does not exist!"));
-        if (!user.getAuthorities().contains(admin) || (request.getIssuer() != null
-                && !Objects.equals(request.getIssuer().getOwner().getId(), userId)))
+        if (user.getAuthorities().contains(admin))
+            return;
+        if (request.getIssuer() != null && !Objects.equals(request.getIssuer().getOwner().getId(), userId))
             throw new Exception("You can not approve this request!");
     }
 
