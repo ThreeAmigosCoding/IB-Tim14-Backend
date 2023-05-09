@@ -157,11 +157,22 @@ public class CertificateController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @GetMapping("/revocation-requests/{userId}")
+    public ResponseEntity<?> getRevocationRequests(@PathVariable Integer userId) {
+        try {
+            List<RevocationRequestDto> revocationRequests = certificateService.getRevocationRequests(userId);
+            return new ResponseEntity<>(revocationRequests, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping("/revocation/{requestId}/{userId}")
     public ResponseEntity<?> acceptRevocationRequest(@PathVariable Integer requestId, @PathVariable Integer userId){
         try {
             certificateService.revokeCertificateChain(requestId, userId);
-            return new ResponseEntity<>("Certificate chain revoked!", HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }

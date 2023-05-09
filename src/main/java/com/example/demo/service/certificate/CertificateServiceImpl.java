@@ -340,6 +340,19 @@ public class CertificateServiceImpl implements CertificateService {
         return new RevocationRequestDto(revocationRequestRepository.save(revocationRequest));
     }
 
+    @Override
+    public List<RevocationRequestDto> getRevocationRequests(Integer userId) throws Exception {
+        User user = userService.findById(userId).orElseThrow(() -> new Exception("User doesn't exist!"));
+        if (user.getAuthorities().contains(roleService.findByName("ROLE_ADMIN"))) {
+            return revocationRequestRepository.findAll().stream()
+                    .map(RevocationRequestDto::new)
+                    .collect(Collectors.toList());
+        }
+        return revocationRequestRepository.findAllByUserId(userId).stream()
+                .map(RevocationRequestDto::new)
+                .collect(Collectors.toList());
+    }
+
     private void validateRevocation(Integer userId, Certificate certificate) throws Exception {
         User user = userService.findById(userId).orElseThrow(() -> new Exception("User doesn't exist!"));
         if (!user.getAuthorities().contains(roleService.findByName("ROLE_ADMIN")) &&

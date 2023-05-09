@@ -49,4 +49,5 @@ public interface CertificateService {
 
     RevocationRequestDto createRevocationRequest(RevocationRequestDto revocationRequestDto, Integer userId) throws Exception;
 
+    List<RevocationRequestDto> getRevocationRequests(Integer userId) throws Exception;
 }
