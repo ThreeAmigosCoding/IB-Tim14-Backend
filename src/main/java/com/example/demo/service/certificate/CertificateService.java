@@ -41,7 +41,7 @@ public interface CertificateService {
 
     void checkValidityFromCopy(MultipartFile certificate) throws Exception;
 
-    DownloadDto getCertificateForDownload(String alias) throws IOException;
+    DownloadDto getCertificateForDownload(String alias, Integer userId) throws Exception;
 
     void validateCertificateCreation(Integer userId, Integer requestId) throws Exception;
 
