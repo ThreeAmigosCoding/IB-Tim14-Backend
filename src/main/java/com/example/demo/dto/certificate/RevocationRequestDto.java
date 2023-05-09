@@ -3,27 +3,29 @@ package com.example.demo.dto.certificate;
 
 import com.example.demo.model.certificate.RevocationRequest;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 
 public class RevocationRequestDto {
 
     private Integer id;
-    private Integer issuerId;
     private Integer revocationCertificateId;
     private String reason;
     private LocalDate requestDate;
     private Boolean approved;
+    private BigInteger revocationCertificateSerialNumber;
 
     //region Constructors
 
-    public RevocationRequestDto(Integer id, Integer issuerId, Integer revocationCertificateId,
-                                String reason, LocalDate requestDate, Boolean approved) {
+
+    public RevocationRequestDto(Integer id, Integer revocationCertificateId, String reason,
+                                LocalDate requestDate, Boolean approved, BigInteger revocationCertificateSerialNumber) {
         this.id = id;
-        this.issuerId = issuerId;
         this.revocationCertificateId = revocationCertificateId;
         this.reason = reason;
         this.requestDate = requestDate;
         this.approved = approved;
+        this.revocationCertificateSerialNumber = revocationCertificateSerialNumber;
     }
 
     public RevocationRequestDto() {
@@ -31,11 +33,11 @@ public class RevocationRequestDto {
 
     public RevocationRequestDto(RevocationRequest request) {
         this.id = request.getId();
-        this.issuerId = request.getIssuer().getId();
         this.revocationCertificateId = request.getRevocationCertificate().getId();
         this.reason = request.getReason();
         this.requestDate = request.getRequestDate();
         this.approved = request.getApproved();
+        this.revocationCertificateSerialNumber = request.getRevocationCertificate().getSerialNumber();
     }
 
     //endregion
@@ -48,14 +50,6 @@ public class RevocationRequestDto {
 
     public void setId(Integer id) {
         this.id = id;
-    }
-
-    public Integer getIssuerId() {
-        return issuerId;
-    }
-
-    public void setIssuerId(Integer issuerId) {
-        this.issuerId = issuerId;
     }
 
     public Integer getRevocationCertificateId() {
@@ -88,6 +82,14 @@ public class RevocationRequestDto {
 
     public void setApproved(Boolean approved) {
         this.approved = approved;
+    }
+
+    public BigInteger getRevocationCertificateSerialNumber() {
+        return revocationCertificateSerialNumber;
+    }
+
+    public void setRevocationCertificateSerialNumber(BigInteger revocationCertificateSerialNumber) {
+        this.revocationCertificateSerialNumber = revocationCertificateSerialNumber;
     }
 
     //endregion

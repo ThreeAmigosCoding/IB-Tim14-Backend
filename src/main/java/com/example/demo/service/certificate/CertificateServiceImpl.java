@@ -313,18 +313,18 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public RevocationRequestDto createRevocationRequest(RevocationRequestDto revocationRequestDto, Integer userId) throws Exception {
+        System.out.println(revocationRequestDto.getRevocationCertificateSerialNumber());
         RevocationRequest revocationRequest = new RevocationRequest();
         revocationRequest.setRequestDate(LocalDate.now());
         revocationRequest.setReason(revocationRequestDto.getReason());
 
-        Certificate revocationCertificate = certificateRepository.findById(revocationRequestDto
-                .getRevocationCertificateId()).orElseThrow(() -> new Exception("Revocation certificate doesn't exist!"));
+        Certificate revocationCertificate = certificateRepository.findBySerialNumber(revocationRequestDto
+                .getRevocationCertificateSerialNumber()).orElseThrow(() -> new Exception("Revocation certificate doesn't exist!"));
         revocationRequest.setRevocationCertificate(revocationCertificate);
 
         validateRevocation(userId, revocationCertificate);
 
-        Certificate issuer = certificateRepository.findById(revocationCertificate.getIssuer().getId())
-                .orElseThrow(() -> new Exception("Issuer certificate doesn't exist!"));
+        Certificate issuer = revocationCertificate.getIssuer();
         revocationRequest.setIssuer(issuer);
 
         User user = userService.findById(userId).orElseThrow(() -> new Exception("User doesn't exist!"));
