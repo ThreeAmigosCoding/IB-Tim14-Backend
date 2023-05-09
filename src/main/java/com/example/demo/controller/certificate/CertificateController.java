@@ -140,7 +140,7 @@ public class CertificateController {
         }
     }
 
-    //@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/download/{alias}/{userId}")
     public ResponseEntity<?> downloadFile(@PathVariable("alias") String alias, @PathVariable Integer userId) {
         try {
