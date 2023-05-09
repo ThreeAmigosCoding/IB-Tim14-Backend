@@ -6,10 +6,12 @@ public class DownloadDto {
 
     private Resource downloadResource;
     private String contentType;
+    private String fileName;
 
-    public DownloadDto(Resource downloadResource, String contentType) {
+    public DownloadDto(Resource downloadResource, String contentType, String fileName) {
         this.downloadResource = downloadResource;
         this.contentType = contentType;
+        this.fileName = fileName;
     }
 
     public DownloadDto() {
@@ -29,5 +31,13 @@ public class DownloadDto {
 
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 }

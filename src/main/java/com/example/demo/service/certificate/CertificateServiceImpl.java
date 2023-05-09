@@ -28,11 +28,13 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -50,6 +52,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class CertificateServiceImpl implements CertificateService {
@@ -247,13 +251,38 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public DownloadDto getCertificateForDownload(String alias) throws IOException {
+    public DownloadDto getCertificateForDownload(String alias, Integer userId) throws Exception {
 
-        Resource resource = new FileSystemResource(certDir + "/" + alias + ".crt");
+        Resource certificateResource = new FileSystemResource(certDir + "/" + alias + ".crt");
+        String contentType = Files.probeContentType(Paths.get(certificateResource.getFile().getPath()));
+        String fileName = alias + ".crt";
 
-        String contentType = Files.probeContentType(Paths.get(resource.getFile().getPath()));
+        Certificate certificate = certificateRepository.findByAlias(alias).orElseThrow(()
+                -> new Exception("Certificate with this alias doesn't exist!"));
+        if (certificate.getOwner().getId().equals(userId)){
+            Resource keyResource = new FileSystemResource(certDir + "/" + alias + ".key");
 
-        return new DownloadDto(resource, contentType);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(baos);
+
+            ZipEntry certificateZipEntry = new ZipEntry(alias + ".crt");
+            zos.putNextEntry(certificateZipEntry);
+            Files.copy(certificateResource.getFile().toPath(), zos);
+            zos.closeEntry();
+
+            ZipEntry keyZipEntry = new ZipEntry(alias + ".key");
+            zos.putNextEntry(keyZipEntry);
+            Files.copy(keyResource.getFile().toPath(), zos);
+            zos.closeEntry();
+
+            zos.close();
+
+            certificateResource = new ByteArrayResource(baos.toByteArray());
+            fileName = "certificateAndKey.zip";
+            contentType = "application/zip";
+        }
+
+        return new DownloadDto(certificateResource, contentType, fileName);
     }
 
     @Override

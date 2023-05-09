@@ -140,19 +140,18 @@ public class CertificateController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @GetMapping("/download/{alias}")
-    public ResponseEntity<?> downloadFile(@PathVariable("alias") String alias) {
+    //@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @GetMapping("/download/{alias}/{userId}")
+    public ResponseEntity<?> downloadFile(@PathVariable("alias") String alias, @PathVariable Integer userId) {
         try {
-            DownloadDto downloadDto = certificateService.getCertificateForDownload(alias);
+            DownloadDto downloadDto = certificateService.getCertificateForDownload(alias, userId);
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(downloadDto.getContentType()))
                     .contentLength(downloadDto.getDownloadResource().contentLength())
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" +
-                            downloadDto.getDownloadResource().getFilename() + "\"")
+                            downloadDto.getFileName() + "\"")
                     .body(downloadDto.getDownloadResource());
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }

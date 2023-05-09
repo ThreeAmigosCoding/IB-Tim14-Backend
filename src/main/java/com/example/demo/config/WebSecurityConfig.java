@@ -91,6 +91,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/user/login").permitAll()
                 .requestMatchers("/api/user/activate/{activation-id}").permitAll()
                 .requestMatchers("/api/user/{email}/resetPassword").permitAll()
+                .requestMatchers("/api/certificate/download/{alias}/{userId}").permitAll()
 
                 // /h2-console/** ako se koristi H2 baza)
                 // ukoliko ne zelimo da koristimo @PreAuthorize anotacije nad metodama kontrolera, moze se iskoristiti hasRole() metoda da se ogranici
