@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -42,6 +43,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setRoles(roles);
         user.setActive(false);
+        user.setLastPasswordResetDate(new Timestamp((new Date()).getTime()));
         //maybe implement mapper
         return save(user);
     }
@@ -64,6 +66,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public boolean shouldChangePassword(User user) {
+        Timestamp today = new Timestamp((new Date()).getTime());
+        System.out.println(today + " -> " + user.getLastPasswordResetDate());
+        long millisecondsDifference = Math.abs(user.getLastPasswordResetDate().getTime() - today.getTime());
+        long minutesDifference = millisecondsDifference / (60 * 1000);
+        System.out.println(minutesDifference);
+
+        return minutesDifference > 2;
     }
 
     @Override

@@ -23,6 +23,9 @@ INSERT INTO USERS (name, surname, telephone_number, email, address, password, la
 INSERT INTO USERS (name, surname, telephone_number, email, address, password, last_password_reset_date, active) VALUES
      ('Milica', 'Markovic', '0664321567', 'milica.markovic@example.net', 'Njegoseva 5', '$2a$12$LznwPRblZczYi4LzgEHSjetyfYQ4c9YUWR0vJKlaJGmvuisnUhGSW', null, true);
 
+INSERT INTO USERS (name, surname, telephone_number, email, address, password, last_password_reset_date, active) VALUES
+    ('RotationTester', 'RotationTester', '0664321567', 'experimentcabbyto@gmail.com', 'Njegoseva 5', '$2a$12$MjgsOV0hSYBMjyQrUzpDT.Ht9sx5N5osXsV1CArnvxlyMDEOcXmEG', '2023-05-04', true);
+
 -- user-role
 
 INSERT INTO USER_ROLE (user_id, role_id) VALUES (1, 2);
