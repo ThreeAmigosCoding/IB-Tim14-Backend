@@ -11,6 +11,7 @@ import com.example.demo.model.user.UserActivation;
 import com.example.demo.service.email.EmailService;
 import com.example.demo.service.user.PasswordResetService;
 import com.example.demo.service.user.UserActivationService;
+import com.example.demo.service.user.UserRecentPasswordService;
 import com.example.demo.service.user.UserService;
 import com.example.demo.util.TokenUtils;
 import jakarta.validation.Valid;
@@ -22,10 +23,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.time.Duration;
+import java.util.Calendar;
 import java.util.Date;
 
 @RestController
@@ -40,7 +44,7 @@ public class UserController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
     private UserService userService;
@@ -54,6 +58,9 @@ public class UserController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private UserRecentPasswordService userRecentPasswordService;
+
     @PostMapping(value = "/login", consumes = "application/json")
     public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest) {
         try {
@@ -66,6 +73,9 @@ public class UserController {
 
             if (!user.isActive())
                 return new ResponseEntity<>("This account is not active!", HttpStatus.BAD_REQUEST);
+
+            if (user.getLastPasswordResetDate() != null && userService.shouldChangePassword(user))
+                return new ResponseEntity<>(new ErrorDTO("Your password expired!"), HttpStatus.BAD_REQUEST);
 
 
             String jwt = tokenUtils.generateToken(user);
@@ -140,9 +150,25 @@ public class UserController {
             return new ResponseEntity<>("Code is expired or not correct!", HttpStatus.BAD_REQUEST);
         }
 
+        //Potentially make this with new reset using old password new password
+        if (userRecentPasswordService.checkForRecentPasswords(user, passwordResetDTO.getNewPassword())){
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date());
+            calendar.add(Calendar.DAY_OF_YEAR, -5);
+            Date fiveDaysAgo = calendar.getTime();
+            passwordReset.setExpiresIn(fiveDaysAgo);
+            passwordResetService.save(passwordReset);
+
+            return new ResponseEntity<>("You tried to use one of you last 5 passwords!", HttpStatus.BAD_REQUEST);
+        }
+
+        userRecentPasswordService.addMostRecent(user);
+
         user.setPassword(passwordEncoder.encode(passwordResetDTO.getNewPassword()));
         user.setLastPasswordResetDate(new Timestamp((new Date()).getTime()));
         userService.save(user);
+
+
 
         return new ResponseEntity<>("Password successfully changed!", HttpStatus.NO_CONTENT);
 
