@@ -9,10 +9,7 @@ import com.example.demo.model.user.PasswordReset;
 import com.example.demo.model.user.User;
 import com.example.demo.model.user.UserActivation;
 import com.example.demo.service.email.EmailService;
-import com.example.demo.service.user.PasswordResetService;
-import com.example.demo.service.user.UserActivationService;
-import com.example.demo.service.user.UserRecentPasswordService;
-import com.example.demo.service.user.UserService;
+import com.example.demo.service.user.*;
 import com.example.demo.util.TokenUtils;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +58,9 @@ public class UserController {
     @Autowired
     private UserRecentPasswordService userRecentPasswordService;
 
+    @Autowired
+    private TwoStepAuthenticationService twoStepAuthenticationService;
+
     @PostMapping(value = "/login", consumes = "application/json")
     public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest) {
         try {
@@ -77,17 +77,22 @@ public class UserController {
             if (user.getLastPasswordResetDate() != null && userService.shouldChangePassword(user))
                 return new ResponseEntity<>(new ErrorDTO("Your password expired!"), HttpStatus.BAD_REQUEST);
 
+            twoStepAuthenticationService.generateAuthentication(user);
 
-            String jwt = tokenUtils.generateToken(user);
-            int expiresIn = tokenUtils.getExpiredIn();
+            return new ResponseEntity<>(new ErrorDTO("An authentication code has been sent to your email."), HttpStatus.OK);
 
-            System.out.println(user.getAuthorities());
-
-            return ResponseEntity.ok(new UserTokenState(jwt, expiresIn));
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorDTO("Wrong username or password!"), HttpStatus.BAD_REQUEST);
         }
+    }
 
+    @PostMapping(value = "/two-step-authentication/{email}/{code}", consumes = "application/json")
+    public ResponseEntity<?> twoStepAuthentication(@PathVariable String email, @PathVariable Integer code) {
+        try {
+            return ResponseEntity.ok(twoStepAuthenticationService.authenticate(email, code));
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorDTO(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping(value = "/register", consumes = "application/json")
@@ -167,8 +172,6 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(passwordResetDTO.getNewPassword()));
         user.setLastPasswordResetDate(new Timestamp((new Date()).getTime()));
         userService.save(user);
-
-
 
         return new ResponseEntity<>("Password successfully changed!", HttpStatus.NO_CONTENT);
 
