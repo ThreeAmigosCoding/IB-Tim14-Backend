@@ -15,7 +15,7 @@ public class EmailService {
 
     public void sendConfirmationEmail(String to, Integer activationId){
         MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = null;
+        MimeMessageHelper helper;
         try {
             helper = new MimeMessageHelper(mimeMessage, true);
             helper.setFrom("x509certificatemanager@gmail.com");
@@ -27,7 +27,6 @@ public class EmailService {
         } catch (MessagingException e) {
             e.printStackTrace();
         }
-
     }
 
     public void sendSimpleEmail(String to, String subject, String body){
@@ -43,7 +42,6 @@ public class EmailService {
         } catch (MessagingException e) {
             e.printStackTrace();
         }
-
     }
 
 }
