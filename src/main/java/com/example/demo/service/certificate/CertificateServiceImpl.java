@@ -27,6 +27,8 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
@@ -34,10 +36,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -191,9 +190,13 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public void addCertificate(String alias, X509Certificate certificate, PrivateKey privateKey) throws Exception {
         try (FileOutputStream certOut = new FileOutputStream(certDir + "/" + alias + ".crt");
-             FileOutputStream keyOut = new FileOutputStream(certDir + "/" + alias + ".key")) {
+             PemWriter pemWriter = new PemWriter(
+                     new OutputStreamWriter(
+                             new FileOutputStream(certDir + "/" + alias + ".key")))) {
             certOut.write(certificate.getEncoded());
-            keyOut.write(privateKey.getEncoded());
+
+            PemObject pemObject = new PemObject("PRIVATE KEY", privateKey.getEncoded());
+            pemWriter.writeObject(pemObject);
         }
     }
 

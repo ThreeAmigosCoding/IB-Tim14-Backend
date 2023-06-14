@@ -36,3 +36,4 @@ build/
 *.crt
 *.key
 *.jks
+*.p12
