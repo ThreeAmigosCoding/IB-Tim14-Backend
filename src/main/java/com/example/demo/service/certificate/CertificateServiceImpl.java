@@ -20,6 +20,8 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -27,6 +29,8 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
@@ -34,10 +38,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -146,7 +147,12 @@ public class CertificateServiceImpl implements CertificateService {
                 generateX500Name(certificateRequest.getOwner()),
                 keyPair.getPublic());
         KeyUsage keyUsage = parseFlags(certificateRequest.getFlags());
+
         certificateBuilder.addExtension(Extension.keyUsage,true, keyUsage);
+
+        GeneralName generalName = new GeneralName(GeneralName.dNSName, "localhost"); // replace "localhost" with your domain
+        GeneralNames subjectAltName = new GeneralNames(generalName);
+        certificateBuilder.addExtension(Extension.subjectAlternativeName, false, subjectAltName);
 
         X509CertificateHolder certHolder = certificateBuilder.build(contentSigner);
 
@@ -190,10 +196,15 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public void addCertificate(String alias, X509Certificate certificate, PrivateKey privateKey) throws Exception {
-        try (FileOutputStream certOut = new FileOutputStream(certDir + "/" + alias + ".crt");
-             FileOutputStream keyOut = new FileOutputStream(certDir + "/" + alias + ".key")) {
-            certOut.write(certificate.getEncoded());
-            keyOut.write(privateKey.getEncoded());
+        try (PemWriter certWriter = new PemWriter(new OutputStreamWriter(new FileOutputStream(certDir + "/" + alias + ".crt")));
+             PemWriter keyWriter = new PemWriter(new OutputStreamWriter(new FileOutputStream(certDir + "/" + alias + ".key")))) {
+            // Write the certificate
+            PemObject certPemObject = new PemObject("CERTIFICATE", certificate.getEncoded());
+            certWriter.writeObject(certPemObject);
+
+            // Write the private key
+            PemObject keyPemObject = new PemObject("PRIVATE KEY", privateKey.getEncoded());
+            keyWriter.writeObject(keyPemObject);
         }
     }
 
@@ -385,11 +396,12 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     private KeyUsage parseFlags(String flags) {
+        System.out.println(flags);
         String[] flagTokens = flags.split(",");
         int cumulativeFlag = 0;
         for (String token: flagTokens) {
             int flag = Integer.parseInt(token);
-            flag = 2 ^ flag;
+            flag = 1 << (7 - flag);  // Subtract flag from 7 before shifting
             cumulativeFlag |= flag;
         }
         return new KeyUsage(cumulativeFlag);
@@ -397,7 +409,8 @@ public class CertificateServiceImpl implements CertificateService {
 
     private X500Name generateX500Name(User owner) {
         X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
-        builder.addRDN(BCStyle.CN, owner.getName() + " " + owner.getSurname());
+        //builder.addRDN(BCStyle.CN, owner.getName() + " " + owner.getSurname());
+        builder.addRDN(BCStyle.CN, "localhost");
         builder.addRDN(BCStyle.SURNAME, owner.getSurname());
         builder.addRDN(BCStyle.GIVENNAME, owner.getName());
         return builder.build();
