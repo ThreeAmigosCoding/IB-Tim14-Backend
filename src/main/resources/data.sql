@@ -40,8 +40,8 @@ INSERT INTO CERTIFICATE_REQUESTS (approved, flags, request_date, signature_algor
 
 INSERT INTO CERTIFICATES (alias, flags, serial_number, signature_algorithm, certificate_type, revoked, valid_from, valid_to,
                           certificate_request_id, issuer_id, owner_id) VALUES
-                        ('7986213100787796006_Milos_Cuturic', '1,2,3,4,5,6,7',
-                         7546435430633085054, 'SHA256withRSA', 'ROOT', false, '2023-06-14', '2023-06-28',
+                        ('2613794723163470693_Milos_Cuturic', '1,2,3,4,5,6,7',
+                         2613794723163470693, 'SHA256withRSA', 'ROOT', false, '2023-06-14', '2023-06-28',
                          1, null, 3);
 
 INSERT INTO CERTIFICATE_REQUESTS (approved, flags, request_date, signature_algorithm, certificate_type, issuer_id, owner_id) VALUES
@@ -49,8 +49,8 @@ INSERT INTO CERTIFICATE_REQUESTS (approved, flags, request_date, signature_algor
 
 INSERT INTO CERTIFICATES (alias, flags, serial_number, signature_algorithm, certificate_type, revoked, valid_from, valid_to,
                           certificate_request_id, issuer_id, owner_id) VALUES
-                        ('4867477084080474655_Milos_Cuturic', '1,2,3,4,5,6,7',
-                        1559085337848162038, 'SHA256withRSA', 'ROOT', false, '2023-06-14', '2023-06-28',
+                        ('5631103559320121860_Milos_Cuturic', '1,2,3,4,5,6,7',
+                         5631103559320121860, 'SHA256withRSA', 'ROOT', false, '2023-06-14', '2023-06-28',
                         2, null, 3);
 
 INSERT INTO CERTIFICATE_REQUESTS (approved, flags, request_date, signature_algorithm, certificate_type, issuer_id, owner_id) VALUES
