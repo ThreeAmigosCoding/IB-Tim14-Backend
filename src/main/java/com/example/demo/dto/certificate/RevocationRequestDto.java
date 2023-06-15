@@ -2,6 +2,7 @@ package com.example.demo.dto.certificate;
 
 
 import com.example.demo.model.certificate.RevocationRequest;
+import jakarta.validation.constraints.Pattern;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -10,6 +11,8 @@ public class RevocationRequestDto {
 
     private Integer id;
     private Integer revocationCertificateId;
+
+    @Pattern(regexp = "[a-zA-Z0-9. ]+")
     private String reason;
     private LocalDate requestDate;
     private Boolean approved;

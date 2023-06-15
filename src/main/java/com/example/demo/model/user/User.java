@@ -23,6 +23,7 @@ public class User implements UserDetails {
     @Pattern(regexp = "^[a-zA-Z]*$", message = "The name must contain only letters")
     private String surname;
     @NotNull
+    @Pattern(regexp = "^[0-9+]+$")
     @Size(min = 5, max = 15)
     private String telephoneNumber;
     @NotNull
@@ -31,10 +32,11 @@ public class User implements UserDetails {
     private String email;
     @NotNull
     @Size(min = 10, max = 50)
+    @Pattern(regexp = "[a-zA-Z0-9,-/ ]+")
     private String address; //za sada ovako
     @NotNull
     @Pattern(regexp = "^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$", message = "Password must contain at least 8 characters," +
-            "1 uppercase letter, q special character and 1 number")
+            "1 uppercase letter, 1 special character and 1 number")
     private String password;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",

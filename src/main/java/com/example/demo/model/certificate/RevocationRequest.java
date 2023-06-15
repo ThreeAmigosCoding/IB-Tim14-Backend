@@ -1,6 +1,7 @@
 package com.example.demo.model.certificate;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 
 import java.time.LocalDate;
 
@@ -21,6 +22,7 @@ public class RevocationRequest {
     private Certificate revocationCertificate;
 
     @Column
+    @Pattern(regexp = "[a-zA-Z0-9. ]+")
     private String reason;
 
     @Column(nullable = false)

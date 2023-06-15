@@ -1,7 +1,11 @@
 package com.example.demo.dto.user;
 
+import jakarta.validation.constraints.Pattern;
+
 public class PasswordResetDTO {
 
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$", message = "Password must contain at least 8 characters," +
+            "1 uppercase letter, 1 special character and 1 number")
     private String newPassword;
     private Integer code;
 

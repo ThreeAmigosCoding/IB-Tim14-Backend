@@ -41,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateFactory;
@@ -178,7 +179,9 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public X509Certificate loadCertificate(String alias) throws Exception {
-        try (FileInputStream certIn = new FileInputStream(certDir + "/" + alias + ".crt")) {
+        validateAlias(alias);
+        Path certPath = Paths.get(certDir, alias + ".crt");
+        try (FileInputStream certIn = new FileInputStream(certPath.toFile())) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             return (X509Certificate) cf.generateCertificate(certIn);
         }
@@ -186,7 +189,9 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public PrivateKey loadKey(String alias) throws Exception {
-        try (FileInputStream keyIn = new FileInputStream(certDir + "/" + alias + ".key")) {
+        validateAlias(alias);
+        Path keyPath = Paths.get(certDir, alias + ".key");
+        try (FileInputStream keyIn = new FileInputStream(keyPath.toFile())) {
             byte[] keyBytes = keyIn.readAllBytes();
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -196,8 +201,13 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public void addCertificate(String alias, X509Certificate certificate, PrivateKey privateKey) throws Exception {
-        try (PemWriter certWriter = new PemWriter(new OutputStreamWriter(new FileOutputStream(certDir + "/" + alias + ".crt")));
-             PemWriter keyWriter = new PemWriter(new OutputStreamWriter(new FileOutputStream(certDir + "/" + alias + ".key")))) {
+        validateAlias(alias);
+
+        Path certPath = Paths.get(certDir, alias + ".crt");
+        Path keyPath = Paths.get(certDir, alias + ".key");
+
+        try (PemWriter certWriter = new PemWriter(new OutputStreamWriter(new FileOutputStream(certPath.toFile())));
+             PemWriter keyWriter = new PemWriter(new OutputStreamWriter(new FileOutputStream(keyPath.toFile())))) {
             // Write the certificate
             PemObject certPemObject = new PemObject("CERTIFICATE", certificate.getEncoded());
             certWriter.writeObject(certPemObject);
@@ -263,15 +273,18 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public DownloadDto getCertificateForDownload(String alias, Integer userId) throws Exception {
+        validateAlias(alias);
+        Path certPath = Paths.get(certDir, alias + ".crt");
 
-        Resource certificateResource = new FileSystemResource(certDir + "/" + alias + ".crt");
+        Resource certificateResource = new FileSystemResource(certPath.toFile());
         String contentType = Files.probeContentType(Paths.get(certificateResource.getFile().getPath()));
         String fileName = alias + ".crt";
 
         Certificate certificate = certificateRepository.findByAlias(alias).orElseThrow(()
                 -> new Exception("Certificate with this alias doesn't exist!"));
         if (certificate.getOwner().getId().equals(userId)){
-            Resource keyResource = new FileSystemResource(certDir + "/" + alias + ".key");
+            Path keyPath = Paths.get(certDir, alias + ".key");
+            Resource keyResource = new FileSystemResource(keyPath.toFile());
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ZipOutputStream zos = new ZipOutputStream(baos);
@@ -414,5 +427,12 @@ public class CertificateServiceImpl implements CertificateService {
         builder.addRDN(BCStyle.SURNAME, owner.getSurname());
         builder.addRDN(BCStyle.GIVENNAME, owner.getName());
         return builder.build();
+    }
+
+    private void validateAlias(String alias) throws Exception {
+        // Validate the alias to prevent path traversal attacks
+        if (alias.contains("..")) {
+            throw new Exception("Invalid alias");
+        }
     }
 }

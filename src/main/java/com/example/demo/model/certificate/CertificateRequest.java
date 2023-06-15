@@ -3,6 +3,8 @@ package com.example.demo.model.certificate;
 import com.example.demo.dto.certificate.CertificateRequestDTO;
 import com.example.demo.model.user.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
@@ -14,6 +16,8 @@ public class CertificateRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Pattern(regexp = "[A-Za-z0-9]+")
+    @Size(max = 15)
     @Column(nullable = false)
     private String signatureAlgorithm;
 
