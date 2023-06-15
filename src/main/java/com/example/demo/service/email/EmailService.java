@@ -21,7 +21,7 @@ public class EmailService {
             helper.setFrom("x509certificatemanager@gmail.com");
             helper.setTo(to);
             helper.setSubject("Account activation");
-            helper.setText("<a href='http://localhost:8080/api/user/activate/" + activationId+ "' " +
+            helper.setText("<a href='https://localhost:8443/api/user/activate/" + activationId+ "' " +
                     "onclick='event.preventDefault(); sendRequest(); return false;'>Click here to activate your account</a>", true);
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {
