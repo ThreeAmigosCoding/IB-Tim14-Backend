@@ -38,3 +38,6 @@ build/
 *.jks
 *.p12
 *.log
+
+### Credentials ###
+MyCredentials.java
