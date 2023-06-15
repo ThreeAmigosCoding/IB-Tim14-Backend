@@ -2,6 +2,8 @@ package com.example.demo.dto.certificate;
 
 import com.example.demo.model.certificate.CertificateRequest;
 import com.example.demo.model.certificate.CertificateType;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -9,6 +11,9 @@ import java.time.LocalDate;
 public class CertificateRequestDTO {
 
     private Integer id;
+
+    @Pattern(regexp = "[A-Za-z0-9]+")
+    @Size(max = 15)
     private String signatureAlgorithm;
     private Integer issuerId;
     private Integer issuerOwnerId;
@@ -16,8 +21,13 @@ public class CertificateRequestDTO {
     private LocalDate requestDate;
     private CertificateType type;
     private Integer ownerId;
+
+    @Pattern(regexp = "[a-zA-Z ]*", message = "The name must contain only letters")
     private String ownerName;
     private Boolean approved;
+
+    @Pattern(regexp = "[0-9,]+")
+    @Size(max = 17)
     private String flags;
 
     // region Constructors
