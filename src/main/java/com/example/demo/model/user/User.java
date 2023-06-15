@@ -34,7 +34,7 @@ public class User implements UserDetails {
     private String address; //za sada ovako
     @NotNull
     @Pattern(regexp = "^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$", message = "Password must contain at least 8 characters," +
-            "1 uppercase letter, q special character and 1 number")
+            "1 uppercase letter, 1 special character and 1 number")
     private String password;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",

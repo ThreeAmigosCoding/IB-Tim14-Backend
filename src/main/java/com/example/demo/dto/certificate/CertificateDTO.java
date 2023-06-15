@@ -4,6 +4,8 @@ import com.example.demo.dto.user.UserDTO;
 import com.example.demo.model.certificate.Certificate;
 import com.example.demo.model.certificate.CertificateType;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -14,14 +16,31 @@ public class CertificateDTO {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigInteger serialNumber;
+
+    @Pattern(regexp = "[A-Za-z0-9]+")
+    @Size(max = 15)
     private String signatureAlgorithm;
+
+    @Pattern(regexp = "^[A-Za-z0-9_]*(?!/|\\.\\.)[A-Za-z0-9_]*$")
+    @Size(max = 100)
     private String issuerAlias;
+
     private LocalDate validFrom;
+
     private LocalDate validTo;
+
     private Boolean revoked;
+
     private CertificateType type;
+
     private UserDTO owner;
+
+    @Pattern(regexp = "^[A-Za-z0-9_]*(?!/|\\.\\.)[A-Za-z0-9_]*$")
+    @Size(max = 100)
     private String alias;
+
+    @Pattern(regexp = "[0-9,]+")
+    @Size(max = 17)
     private String flags;
 
     //region Constructors

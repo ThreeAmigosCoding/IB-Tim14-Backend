@@ -2,6 +2,8 @@ package com.example.demo.model.certificate;
 
 import com.example.demo.model.user.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -18,6 +20,8 @@ public class Certificate {
     private BigInteger serialNumber;
 
     @Column(nullable = false)
+    @Pattern(regexp = "[A-Za-z0-9]+")
+    @Size(max = 15)
     private String signatureAlgorithm;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
@@ -42,6 +46,8 @@ public class Certificate {
     private User owner;
 
     @Column(nullable = false)
+    @Pattern(regexp = "^[A-Za-z0-9_]*(?!/|\\.\\.)[A-Za-z0-9_]*$")
+    @Size(max = 100)
     private String alias;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
@@ -49,6 +55,8 @@ public class Certificate {
     private CertificateRequest certificateRequest;
 
     @Column(nullable = false)
+    @Pattern(regexp = "[0-9,]+")
+    @Size(max = 17)
     private String flags;
 
     // region Constructors
