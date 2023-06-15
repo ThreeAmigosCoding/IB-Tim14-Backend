@@ -13,5 +13,8 @@ public class PasswordResetServiceImpl implements PasswordResetService{
 
     public PasswordReset findOne(Integer code, User user){ return passwordResetRepository.findByCodeAndUser(code, user); }
 
-    public PasswordReset save(PasswordReset passwordReset) {return passwordResetRepository.save(passwordReset);}
+    public PasswordReset save(PasswordReset passwordReset) {
+        
+        return passwordResetRepository.save(passwordReset);
+    }
 }
