@@ -12,7 +12,7 @@ INSERT INTO USERS (name, surname, telephone_number, email, address, password, la
     ('Marko', 'Janosevic', '064875321', 'marko@mail.com', 'Mise Dimitrijevica 18', '$2a$12$uvrpCV2.4YqkBGgMieXBY.ozpmzCX1kXL2q.rJbQXi67brtPvrJ.S', null, true);
 
 INSERT INTO USERS (name, surname, telephone_number, email, address, password, last_password_reset_date, active) VALUES
-    ('Milos', 'Cuturic', '0651234567', 'cijolev858@byorby.com', 'Hadzi-Ruvimova 45', '$2a$12$I5hPbl8r2OflbcElIonVlez.fjDvNdzVMjXvWPSUIEeUGGenjarn.', null, true);
+    ('Milos', 'Cuturic', '0651234567', 'threeamigoscoding@gmail.com', 'Hadzi-Ruvimova 45', '$2a$12$I5hPbl8r2OflbcElIonVlez.fjDvNdzVMjXvWPSUIEeUGGenjarn.', null, true);
 
 INSERT INTO USERS (name, surname, telephone_number, email, address, password, last_password_reset_date, active) VALUES
     ('Sara', 'Stojanovic', '0639876543', 'sara.stojanovic@example.org', 'Bulevar Mihajla Pupina 67', '$2a$12$9zUpiWjS0/YLuE98/e8UseoeXaQYpt9sROHeQ7qSNTDMX10skBipK', null, true);
