@@ -10,6 +10,8 @@ import com.example.demo.model.certificate.CertificateRequest;
 import com.example.demo.service.certificate.CertificateRequestService;
 import com.example.demo.service.certificate.CertificateService;
 import com.example.demo.service.certificate.RevocationRequestService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,6 +40,8 @@ public class CertificateController {
 
     @Autowired
     private RevocationRequestService revocationRequestService;
+
+    private static final Logger logger = LoggerFactory.getLogger(CertificateController.class);
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping(value = "/create-request", consumes = "application/json")

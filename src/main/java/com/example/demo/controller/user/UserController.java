@@ -1,6 +1,7 @@
 package com.example.demo.controller.user;
 
 
+import com.example.demo.controller.certificate.CertificateController;
 import com.example.demo.dto.ErrorDTO;
 import com.example.demo.dto.user.PasswordResetDTO;
 import com.example.demo.dto.user.UserDTO;
@@ -12,6 +13,8 @@ import com.example.demo.service.email.EmailService;
 import com.example.demo.service.user.*;
 import com.example.demo.util.TokenUtils;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,9 +64,12 @@ public class UserController {
     @Autowired
     private TwoStepAuthenticationService twoStepAuthenticationService;
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     @PostMapping(value = "/login", consumes = "application/json")
     public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest) {
         try {
+            logger.info(authenticationRequest.getEmail() + " tried to log in.");
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                     authenticationRequest.getEmail(), authenticationRequest.getPassword()));
 
