@@ -6,6 +6,8 @@ import com.example.demo.model.user.User;
 import com.example.demo.repository.user.TwoStepAuthenticationRepository;
 import com.example.demo.service.email.EmailService;
 import com.example.demo.util.TokenUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,8 @@ public class TwoStepAuthenticationServiceImpl implements TwoStepAuthenticationSe
 
     @Autowired
     private UserService userService;
+    private static final Logger logger = LoggerFactory.getLogger(TwoStepAuthenticationServiceImpl.class);
+
 
     @Override
     public void generateAuthentication(User user) {
@@ -46,17 +50,22 @@ public class TwoStepAuthenticationServiceImpl implements TwoStepAuthenticationSe
     @Override
     public UserTokenState authenticate(String email, Integer code) throws Exception {
         User user = userService.findByEmail(email);
-        if (user == null) throw new Exception("User doesn't exist!");
+        if (user == null){
+            logger.warn("user tried to log in with non existing e-mail!");
+            throw new Exception("User doesn't exist!");
+        }
 
         TwoStepAuthentication twoStepAuthentication = twoStepAuthenticationRepository.findByUserAndCode(user, code)
                 .orElseThrow(() -> new Exception("Invalid code!"));
 
-        if (LocalDate.now().isAfter(twoStepAuthentication.getExpirationDate()))
+        if (LocalDate.now().isAfter(twoStepAuthentication.getExpirationDate())){
+            logger.warn("user {} tried to log in with expired code!", user.getId());
             throw new Exception("Your authentication code has expired!");
+        }
 
         String jwt = tokenUtils.generateToken(user);
         int expiresIn = tokenUtils.getExpiredIn();
-
+        logger.info("user {} logged in successfully!", user.getId());
         return new UserTokenState(jwt, expiresIn);
     }
 

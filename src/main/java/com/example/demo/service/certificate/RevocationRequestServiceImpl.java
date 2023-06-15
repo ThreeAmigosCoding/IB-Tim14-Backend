@@ -10,6 +10,8 @@ import com.example.demo.repository.certificate.RevocationRequestRepository;
 import com.example.demo.repository.user.UserRepository;
 import com.example.demo.service.role.RoleService;
 import com.example.demo.service.user.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,7 @@ public class RevocationRequestServiceImpl implements RevocationRequestService {
 
     @Autowired
     private RoleService roleService;
+    private static final Logger logger = LoggerFactory.getLogger(RevocationRequestServiceImpl.class);
 
 
     @Override
@@ -40,11 +43,13 @@ public class RevocationRequestServiceImpl implements RevocationRequestService {
 
     @Override
     public RevocationRequestDto rejectRevocationRequest(Integer userId, Integer requestId) throws Exception {
+        logger.info("Trying to reject revocation request {} for user {}", requestId, userId);
         RevocationRequest request = findById(requestId);
 
         validateRevocation(userId, request.getIssuer());
 
         request.setApproved(false);
+        logger.info("Revocation request {} for user {} rejected successfully", requestId, userId);
         return new RevocationRequestDto(revocationRequestRepository.save(request));
     }
 
@@ -55,6 +60,7 @@ public class RevocationRequestServiceImpl implements RevocationRequestService {
     }
 
     private void validateRevocation(Integer userId, Certificate certificate) throws Exception {
+        logger.info("Validating revocation for user {}", userId);
         User user = userService.findById(userId).orElseThrow(() -> new Exception("User doesn't exist!"));
         if (!user.getAuthorities().contains(roleService.findByName("ROLE_ADMIN")) &&
                 !Objects.equals(userId, certificate.getOwner().getId()))
