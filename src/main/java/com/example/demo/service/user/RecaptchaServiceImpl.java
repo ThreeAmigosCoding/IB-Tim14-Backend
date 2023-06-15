@@ -1,11 +1,11 @@
 package com.example.demo.service.user;
 
 import com.example.demo.dto.user.RecaptchaResponse;
+import com.example.demo.util.MyCredentials;
 import com.google.gson.Gson;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 
 
 @Service
@@ -19,7 +19,7 @@ public class RecaptchaServiceImpl implements RecaptchaService {
     public boolean verifyRecaptcha(String response) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        HttpEntity<String> entity = new HttpEntity<>("response=" + response + "&secret=" + recaptchaSecretKey, headers);
+        HttpEntity<String> entity = new HttpEntity<>("response=" + response + "&secret=" + MyCredentials.reCaptchaKey, headers);
         ResponseEntity<String> recaptchaResponseEntity = restTemplate.postForEntity(RECAPTCHA_VERIFY_URL, entity, String.class);
 
         if (recaptchaResponseEntity.getStatusCode() == HttpStatus.OK) {
