@@ -61,9 +61,16 @@ public class UserController {
     @Autowired
     private TwoStepAuthenticationService twoStepAuthenticationService;
 
+    @Autowired
+    private RecaptchaService recaptchaService;
+
     @PostMapping(value = "/login", consumes = "application/json")
-    public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest) {
+    public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest, @RequestParam String recaptchaResponse) {
         try {
+            if (!recaptchaService.verifyRecaptcha(recaptchaResponse)) {
+                return new ResponseEntity<>(new ErrorDTO("ReCaptcha validation failed!"), HttpStatus.BAD_REQUEST);
+            }
+
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                     authenticationRequest.getEmail(), authenticationRequest.getPassword()));
 
@@ -96,7 +103,10 @@ public class UserController {
     }
 
     @PostMapping(value = "/register", consumes = "application/json")
-    public ResponseEntity<?> register(@Valid @RequestBody UserDTO userDTO){
+    public ResponseEntity<?> register(@Valid @RequestBody UserDTO userDTO, @RequestParam String recaptchaResponse){
+        if (!recaptchaService.verifyRecaptcha(recaptchaResponse)) {
+            return new ResponseEntity<>(new ErrorDTO("ReCaptcha validation failed!"), HttpStatus.BAD_REQUEST);
+        }
         User user = userService.createNew(userDTO);
         if (user == null) return new //change to try catch for .crateNew method when exceptions are implemented
                 ResponseEntity<>("User with this username already exists!", HttpStatus.BAD_REQUEST);
