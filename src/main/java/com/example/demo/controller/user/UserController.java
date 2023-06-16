@@ -6,6 +6,7 @@ import com.example.demo.dto.ErrorDTO;
 import com.example.demo.dto.user.GoogleOAuthRequestDTO;
 import com.example.demo.dto.user.PasswordResetDTO;
 import com.example.demo.dto.user.UserDTO;
+import com.example.demo.dto.user.UserTokenState;
 import com.example.demo.model.user.PasswordReset;
 import com.example.demo.model.user.User;
 import com.example.demo.model.user.UserActivation;
@@ -78,6 +79,9 @@ public class UserController {
     @Autowired
     private RecaptchaService recaptchaService;
 
+    @Autowired
+    private OauthService oauthService;
+
     @PostMapping(value = "/login", consumes = "application/json")
     public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest, @RequestParam String recaptchaResponse) {
         try {
@@ -116,26 +120,16 @@ public class UserController {
     }
 
     @PostMapping(value = "/oauth", consumes = "application/json")
-    public ResponseEntity<?> oauthLogin(@RequestBody GoogleOAuthRequestDTO googleOAuthRequest) throws GeneralSecurityException, IOException {
-        String idTokenString = googleOAuthRequest.getIdToken();
-        HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
-        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
-                .setAudience(Collections.singletonList(oAuthClientId))
-                .build();
-
-        GoogleIdToken idToken = verifier.verify(idTokenString);
-        if (idToken != null) {
-            IdToken.Payload payload = idToken.getPayload();
-
-            System.out.println(payload);
-            System.out.println(payload.get("email"));
-
-            return new ResponseEntity<>(new ErrorDTO("OK!"), HttpStatus.OK);
-        } else {
-            System.out.println("Invalid ID token.");
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<?> oauthLogin(@RequestBody GoogleOAuthRequestDTO googleOAuthRequest) {
+        try {
+            logger.info("User trying to login via google.");
+            User user = oauthService.oauthVerification(googleOAuthRequest);
+            String jwt = tokenUtils.generateToken(user);
+            int expiresIn = tokenUtils.getExpiredIn();
+            logger.info("user {} logged in successfully!", user.getId());
+            return ResponseEntity.ok(new UserTokenState(jwt, expiresIn));
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorDTO(e.getMessage()), HttpStatus.UNAUTHORIZED);
         }
     }
 
