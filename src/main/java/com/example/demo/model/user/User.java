@@ -23,6 +23,7 @@ public class User implements UserDetails {
     @Pattern(regexp = "^[a-zA-Z]*$", message = "The name must contain only letters")
     private String surname;
     @NotNull
+    @Pattern(regexp = "^[0-9+]+$")
     @Size(min = 5, max = 15)
     private String telephoneNumber;
     @NotNull
@@ -31,10 +32,11 @@ public class User implements UserDetails {
     private String email;
     @NotNull
     @Size(min = 10, max = 50)
+    @Pattern(regexp = "[a-zA-Z0-9,-/ ]+")
     private String address; //za sada ovako
     @NotNull
     @Pattern(regexp = "^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$", message = "Password must contain at least 8 characters," +
-            "1 uppercase letter, q special character and 1 number")
+            "1 uppercase letter, 1 special character and 1 number")
     private String password;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",
@@ -44,8 +46,11 @@ public class User implements UserDetails {
     @Column(name = "last_password_reset_date")
     private Timestamp lastPasswordResetDate;
 
+    @Column
+    private boolean active;
 
-    public User(Integer id, String name, String surname, String telephoneNumber, String email, String address, String password, List<Role> roles, Timestamp lastPasswordResetDate) {
+    public User(Integer id, String name, String surname, String telephoneNumber, String email, String address,
+                String password, List<Role> roles, Timestamp lastPasswordResetDate, boolean active) {
         this.id = id;
         this.name = name;
         this.surname = surname;
@@ -55,6 +60,7 @@ public class User implements UserDetails {
         this.password = password;
         this.roles = roles;
         this.lastPasswordResetDate = lastPasswordResetDate;
+        this.active = active;
     }
 
     public User() {}
@@ -119,6 +125,18 @@ public class User implements UserDetails {
         this.roles = roles;
     }
 
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.roles;
@@ -156,4 +174,6 @@ public class User implements UserDetails {
     public void setLastPasswordResetDate(Timestamp lastPasswordResetDate) {
         this.lastPasswordResetDate = lastPasswordResetDate;
     }
+
+
 }

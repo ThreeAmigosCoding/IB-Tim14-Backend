@@ -3,12 +3,14 @@ package com.example.demo.service.user;
 import com.example.demo.dto.user.UserDTO;
 import com.example.demo.model.user.Role;
 import com.example.demo.model.user.User;
+import com.example.demo.model.user.UserActivation;
 import com.example.demo.repository.user.UserRepository;
 import com.example.demo.service.role.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -25,6 +27,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createNew(UserDTO userDTO) {
+
         User user = new User();
 
         if (userRepository.findByEmail(userDTO.getEmail()) != null){
@@ -40,6 +43,8 @@ public class UserServiceImpl implements UserService {
         user.setEmail(userDTO.getEmail());
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setRoles(roles);
+        user.setActive(false);
+        user.setLastPasswordResetDate(new Timestamp((new Date()).getTime()));
         //maybe implement mapper
         return save(user);
     }
@@ -57,5 +62,26 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findById(Integer id) {
         return userRepository.findById(id);
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public boolean shouldChangePassword(User user) {
+        Timestamp today = new Timestamp((new Date()).getTime());
+        long millisecondsDifference = Math.abs(user.getLastPasswordResetDate().getTime() - today.getTime());
+        long minutesDifference = millisecondsDifference / (60 * 1000);
+
+        return minutesDifference > 2;
+    }
+
+    @Override
+    public User activate(UserActivation activation) {
+        User user = userRepository.findByEmail(activation.getUser().getEmail());
+        user.setActive(true);
+        return userRepository.save(user);
     }
 }

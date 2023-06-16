@@ -12,8 +12,11 @@ public interface CertificateRequestService {
 
     CertificateRequest findById(Integer id);
 
-    CertificateRequestDTO rejectCertificateRequest(Integer id);
+    CertificateRequestDTO rejectCertificateRequest(Integer userId, Integer requestId) throws Exception;
+
+    CertificateRequest validateRequestRejection(Integer userId, Integer requestId) throws Exception;
 
     List<CertificateRequestDTO> getAllUserRequests(Integer id);
 
+    List<CertificateRequestDTO> findAllRequests();
 }
