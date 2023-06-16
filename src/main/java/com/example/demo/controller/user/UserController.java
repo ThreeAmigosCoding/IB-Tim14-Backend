@@ -1,6 +1,7 @@
 package com.example.demo.controller.user;
 
 
+import com.example.demo.controller.certificate.CertificateController;
 import com.example.demo.dto.ErrorDTO;
 import com.example.demo.dto.user.PasswordResetDTO;
 import com.example.demo.dto.user.UserDTO;
@@ -11,6 +12,8 @@ import com.example.demo.service.email.EmailService;
 import com.example.demo.service.user.*;
 import com.example.demo.util.TokenUtils;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,12 +60,15 @@ public class UserController {
     @Autowired
     private TwoStepAuthenticationService twoStepAuthenticationService;
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private RecaptchaService recaptchaService;
 
     @PostMapping(value = "/login", consumes = "application/json")
     public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest, @RequestParam String recaptchaResponse) {
         try {
+
             if (!recaptchaService.verifyRecaptcha(recaptchaResponse)) {
                 return new ResponseEntity<>(new ErrorDTO("ReCaptcha validation failed!"), HttpStatus.BAD_REQUEST);
             }
@@ -73,18 +79,25 @@ public class UserController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             User user = (User) authentication.getPrincipal();
+            logger.info("User with ID: {} trying to log in.", user.getId());
 
-            if (!user.isActive())
+            if (!user.isActive()){
+                logger.warn("User with ID: {} failed to log in due to their account not being active.", user.getId());
                 return new ResponseEntity<>("This account is not active!", HttpStatus.BAD_REQUEST);
+            }
 
-            if (user.getLastPasswordResetDate() != null && userService.shouldChangePassword(user))
+            if (user.getLastPasswordResetDate() != null && userService.shouldChangePassword(user)){
+                logger.warn("User with ID: {} failed to log in due to password expiration.", user.getId());
                 return new ResponseEntity<>(new ErrorDTO("Your password expired!"), HttpStatus.BAD_REQUEST);
+            }
 
             twoStepAuthenticationService.generateAuthentication(user);
 
+            logger.info("User with ID: {} completed the first step of authentication.", user.getId());
             return new ResponseEntity<>(new ErrorDTO("An authentication code has been sent to your email."), HttpStatus.OK);
 
         } catch (Exception e) {
+            logger.warn("A user tried to log in with wrong username or password.", e);
             return new ResponseEntity<>(new ErrorDTO("Wrong username or password!"), HttpStatus.BAD_REQUEST);
         }
     }
@@ -92,6 +105,8 @@ public class UserController {
     @PostMapping(value = "/two-step-authentication/{email}/{code}", consumes = "application/json")
     public ResponseEntity<?> twoStepAuthentication(@PathVariable String email, @PathVariable Integer code) {
         try {
+            logger.info("user tying to do second step of authentication");
+            // dalje logovanje u servisu
             return ResponseEntity.ok(twoStepAuthenticationService.authenticate(email, code));
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorDTO(e.getMessage()), HttpStatus.BAD_REQUEST);
@@ -100,23 +115,33 @@ public class UserController {
 
     @PostMapping(value = "/register", consumes = "application/json")
     public ResponseEntity<?> register(@Valid @RequestBody UserDTO userDTO, @RequestParam String recaptchaResponse){
+        logger.info("user trying to register");
         if (!recaptchaService.verifyRecaptcha(recaptchaResponse)) {
             return new ResponseEntity<>(new ErrorDTO("ReCaptcha validation failed!"), HttpStatus.BAD_REQUEST);
         }
+
         User user = userService.createNew(userDTO);
-        if (user == null) return new //change to try catch for .crateNew method when exceptions are implemented
-                ResponseEntity<>("User with this username already exists!", HttpStatus.BAD_REQUEST);
+        if (user == null) {
+            logger.warn("new user tried to register with existing e-mail");
+            return new
+                    ResponseEntity<>("User with this username already exists!", HttpStatus.BAD_REQUEST);
+        }
 
         UserActivation userActivation = userActivationService.save(user);
         emailService.sendConfirmationEmail(user.getEmail(), userActivation.getId());
+        logger.info("activation link for the user was successfully " +
+                "created and sent to e-mail address");
 
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     @GetMapping(value = "/activate/{activation-code}")
     public ResponseEntity<?> activateAccount(@PathVariable("activation-code") Integer activationId){
+        logger.info("user trying to confirm registration");
         UserActivation userActivation = userActivationService.findById(activationId);
         if (userActivation == null) {
+            logger.warn("user: {} tried to confirm registration " +
+                    "with non existing id", userActivation.getUser().getId());
             return new ResponseEntity<>("Activation with entered id does not exist!",
                     HttpStatus.NOT_FOUND);
         }
@@ -124,20 +149,23 @@ public class UserController {
         if (!userActivationService.isActivationValid(userActivation)){
             emailService.sendSimpleEmail(userActivationService.findById(activationId).getUser().getEmail(),
                     "Activation expired", "Your activation with id=" + activationId + " has expired!");
+            logger.warn("user: {} tried to confirm registration with expired id", userActivation.getUser().getId());
             return new ResponseEntity<>(new ErrorDTO("Activation expired. Register again!"), HttpStatus.BAD_REQUEST);
         }
 
         userService.activate(userActivationService.findById(activationId));
         emailService.sendSimpleEmail(userActivationService.findById(activationId).getUser().getEmail(),
                 "Account activated", "Your activation with id=" + activationId + " was successful!");
+        logger.info("user confirmed registration successfully");
         return new ResponseEntity<>(new ErrorDTO("Successful account activation!"), HttpStatus.OK);
     }
 
     @GetMapping(value = "/{email}/resetPassword")
     public ResponseEntity<?> getResetRequest(@PathVariable String email){
+        logger.info("user trying to get reset password request");
         User user = userService.findByEmail(email);
-
         if (user == null) {
+            logger.info("user tried to reset password with non existing e-mail!");
             return new ResponseEntity<>("User with this email does not exist!", HttpStatus.NOT_FOUND);
         }
 
@@ -146,18 +174,22 @@ public class UserController {
 
         emailService.sendSimpleEmail(user.getEmail(), "Password reset", "To reset password please enter" +
                 "this code: " + passwordResetSaved.getCode());
+        logger.info("user: {} reset password request sent successfully!", user.getId());
         return new ResponseEntity<>("Email with reset code has been sent!", HttpStatus.NO_CONTENT);
     }
 
     @PutMapping(value = "/{email}/resetPassword")
     public ResponseEntity<?> resetPassword(@PathVariable String email, @RequestBody PasswordResetDTO passwordResetDTO){
+        logger.info("user trying to reset password");
         User user = userService.findByEmail(email);
         if (user == null) {
+            logger.info("user tried to reset password with non existing e-mail!");
             return new ResponseEntity<>("User does not exist!", HttpStatus.NOT_FOUND);
         }
 
         PasswordReset passwordReset = passwordResetService.findOne(passwordResetDTO.getCode(), user);
         if (passwordReset == null || passwordReset.getExpiresIn().getTime() < new Date().getTime()){
+            logger.warn("user: {} tried to reset password with non existing or expired code!", user.getId());
             return new ResponseEntity<>("Code is expired or not correct!", HttpStatus.BAD_REQUEST);
         }
 
@@ -169,7 +201,7 @@ public class UserController {
             Date fiveDaysAgo = calendar.getTime();
             passwordReset.setExpiresIn(fiveDaysAgo);
             passwordResetService.save(passwordReset);
-
+            logger.warn("user: {} tried to reset password with one of his 5 most recent passwords!", user.getId());
             return new ResponseEntity<>("You tried to use one of you last 5 passwords!", HttpStatus.BAD_REQUEST);
         }
 
@@ -178,7 +210,7 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(passwordResetDTO.getNewPassword()));
         user.setLastPasswordResetDate(new Timestamp((new Date()).getTime()));
         userService.save(user);
-
+        logger.info("user: {} reset password successfully!", user.getId());
         return new ResponseEntity<>("Password successfully changed!", HttpStatus.NO_CONTENT);
 
     }

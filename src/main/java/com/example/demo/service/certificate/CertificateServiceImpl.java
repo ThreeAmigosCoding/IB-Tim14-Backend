@@ -31,6 +31,8 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
@@ -76,9 +78,13 @@ public class CertificateServiceImpl implements CertificateService {
     private RevocationRequestRepository revocationRequestRepository;
 
     private static final String certDir = "src/certificates";
+  
+    private static final Logger logger = LoggerFactory.getLogger(CertificateServiceImpl.class);
+
 
     @Override
     public CertificateRequestDTO createRequest(CertificateRequestDTO certificateRequestDTO) throws Exception {
+        logger.info("user Trying to create certificate creation request");
         CertificateRequest certificateRequest = new CertificateRequest(certificateRequestDTO);
         certificateRequest.setApproved(null);
         certificateRequest.setOwner(userService.findById(certificateRequestDTO.getOwnerId()).orElseThrow());
@@ -103,10 +109,14 @@ public class CertificateServiceImpl implements CertificateService {
             certificateRequest.setApproved(true);
             certificateRequestRepository.save(certificateRequest);
             this.generateCertificate(certificateRequest);
+            logger.info("user {} created a certificate request where he is the issuer so the request was" +
+                    "approved immediately ", certificateRequest.getOwner().getId());
             return new CertificateRequestDTO(certificateRequest);
         }
 
         certificateRequestRepository.save(certificateRequest);
+        logger.info("user {} created a certificate creation request with issuer {}",
+                certificateRequest.getOwner().getId(), certificateRequest.getIssuer().getId());
         return new CertificateRequestDTO(certificateRequest);
     }
 
@@ -118,6 +128,8 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Certificate generateCertificate(CertificateRequest certificateRequest) throws Exception {
+        logger.info("user {} Trying to generate a certificate with issuer {}",
+                certificateRequest.getOwner().getId(), certificateRequest.getIssuer().getId());
         X509Certificate issuerCertificate;
         Certificate issuer = certificateRequest.getIssuer();
         X500Name issuerX500Name = generateX500Name(certificateRequest.getOwner());
@@ -173,7 +185,8 @@ public class CertificateServiceImpl implements CertificateService {
         certificateRepository.save(certificate);
         certificateRequest.setApproved(true);
         certificateRequestRepository.save(certificateRequest);
-
+        logger.info("user {} successfully generated a certificate with issuer {}",
+                certificateRequest.getOwner().getId(), certificateRequest.getIssuer().getId());
         return certificate;
     }
 
@@ -201,6 +214,8 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public void addCertificate(String alias, X509Certificate certificate, PrivateKey privateKey) throws Exception {
+
+        logger.info("Adding a certificate to the file system ");
         validateAlias(alias);
 
         Path certPath = Paths.get(certDir, alias + ".crt");
@@ -215,6 +230,7 @@ public class CertificateServiceImpl implements CertificateService {
             // Write the private key
             PemObject keyPemObject = new PemObject("PRIVATE KEY", privateKey.getEncoded());
             keyWriter.writeObject(keyPemObject);
+            logger.info("Successfully added certificate to the file system ");
         }
     }
 
@@ -228,12 +244,15 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public KeyPair generateKeyPair() {
+        logger.info("Generating key air...");
         try {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
             SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
             keyGen.initialize(2048, random);
+            logger.info("Key pair Generated");
             return keyGen.generateKeyPair();
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+            logger.error("Error while generating key pair {}",e.getMessage());
             e.printStackTrace();
         }
         return null;
@@ -249,6 +268,7 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public void checkValidity(BigInteger serialNumber) throws Exception {
         Certificate certificate = certificateRepository.findBySerialNumber(serialNumber).orElseThrow();
+        logger.info("Trying to validate certificate for owner {}", certificate.getOwner().getId());
         X509Certificate x509Certificate = loadCertificate(certificate.getAlias());
 
         if (certificate.isRevoked()) throw new Exception("Issuer certificate is not valid!");
@@ -258,7 +278,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public void checkValidityFromCopy(MultipartFile certificate) throws Exception {
-
+        logger.info("Trying to validate certificate from copy");
         String extension = FilenameUtils.getExtension(certificate.getOriginalFilename());
         if (extension != null && !extension.equals("crt")){
             throw new Exception("File type must be certificate!");
@@ -273,6 +293,8 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public DownloadDto getCertificateForDownload(String alias, Integer userId) throws Exception {
+
+        logger.info("Trying to find certificate to download for user {}", userId);
         validateAlias(alias);
         Path certPath = Paths.get(certDir, alias + ".crt");
 
@@ -283,6 +305,8 @@ public class CertificateServiceImpl implements CertificateService {
         Certificate certificate = certificateRepository.findByAlias(alias).orElseThrow(()
                 -> new Exception("Certificate with this alias doesn't exist!"));
         if (certificate.getOwner().getId().equals(userId)){
+
+            logger.info("Packing user's key in a zip because user is also an owner");
             Path keyPath = Paths.get(certDir, alias + ".key");
             Resource keyResource = new FileSystemResource(keyPath.toFile());
 
@@ -311,6 +335,8 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public void validateCertificateCreation(Integer userId, Integer requestId) throws Exception {
+        logger.info("Validating certificate creation for user {} and certificate creation request {} ",
+                userId, requestId);
         CertificateRequest request = this.certificateRequestRepository.findById(requestId)
                 .orElseThrow(() -> new Exception("Request does not exist!"));
         Role admin = roleService.findByName("ROLE_ADMIN");
@@ -320,10 +346,12 @@ public class CertificateServiceImpl implements CertificateService {
             return;
         if (request.getIssuer() != null && !Objects.equals(request.getIssuer().getOwner().getId(), userId))
             throw new Exception("You can not approve this request!");
+        logger.info("validation for user {} and request {} succeeded", userId, requestId);
     }
 
     @Override
     public void revokeCertificateChain(Integer revocationRequestId, Integer userId) throws Exception {
+        logger.info("Trying to revoke certificate chain for user {}", userId);
         RevocationRequest request = revocationRequestRepository.findById(revocationRequestId).orElseThrow(
                 () -> new Exception("Revocation request doesn't exist!")
         );
@@ -337,6 +365,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public RevocationRequestDto createRevocationRequest(RevocationRequestDto revocationRequestDto, Integer userId) throws Exception {
+        logger.info("Trying to create revocation request for user {}", userId);
         System.out.println(revocationRequestDto.getRevocationCertificateSerialNumber());
         RevocationRequest revocationRequest = new RevocationRequest();
         revocationRequest.setRequestDate(LocalDate.now());
@@ -345,6 +374,7 @@ public class CertificateServiceImpl implements CertificateService {
         Certificate revocationCertificate = certificateRepository.findBySerialNumber(revocationRequestDto
                 .getRevocationCertificateSerialNumber()).orElseThrow(() -> new Exception("Revocation certificate doesn't exist!"));
         revocationRequest.setRevocationCertificate(revocationCertificate);
+        logger.info("Found a certificate {} to revoke for user {}", revocationCertificate.getId(), userId);
 
         validateRevocation(userId, revocationCertificate);
 
@@ -361,11 +391,14 @@ public class CertificateServiceImpl implements CertificateService {
             return new RevocationRequestDto(revocationRequest);
         }
 
+        logger.info("Successfully created revocation request for certificate {} and user {}",
+                revocationCertificate.getId(), userId);
         return new RevocationRequestDto(revocationRequestRepository.save(revocationRequest));
     }
 
     @Override
     public List<RevocationRequestDto> getRevocationRequests(Integer userId) throws Exception {
+        logger.info("Trying to get revocation requests for user {}", userId);
         User user = userService.findById(userId).orElseThrow(() -> new Exception("User doesn't exist!"));
         if (user.getAuthorities().contains(roleService.findByName("ROLE_ADMIN"))) {
             return revocationRequestRepository.findAll().stream()
@@ -378,6 +411,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     private void validateRevocation(Integer userId, Certificate certificate) throws Exception {
+        logger.info("Validating revocation for user {}", userId);
         User user = userService.findById(userId).orElseThrow(() -> new Exception("User doesn't exist!"));
         if (!user.getAuthorities().contains(roleService.findByName("ROLE_ADMIN")) &&
                 !Objects.equals(userId, certificate.getOwner().getId()))

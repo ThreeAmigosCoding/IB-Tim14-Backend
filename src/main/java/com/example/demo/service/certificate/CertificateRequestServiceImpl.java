@@ -7,6 +7,8 @@ import com.example.demo.model.user.User;
 import com.example.demo.repository.certificate.CertificateRequestRepository;
 import com.example.demo.service.role.RoleService;
 import com.example.demo.service.user.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,8 @@ public class CertificateRequestServiceImpl implements CertificateRequestService{
     @Autowired
     private UserService userService;
 
+    private static final Logger logger = LoggerFactory.getLogger(CertificateRequestServiceImpl.class);
+
     @Override
     public CertificateRequest findById(Integer id) {
         return certificateRequestRepository.findById(id).orElseThrow();
@@ -33,6 +37,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService{
 
     @Override
     public CertificateRequestDTO rejectCertificateRequest(Integer userId, Integer requestId) throws Exception {
+        logger.info("Rejecting certificate request for user {}, and request {}", userId, requestId);
         CertificateRequest request = this.validateRequestRejection(userId, requestId);
 
         request.setApproved(false);
@@ -41,6 +46,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService{
 
     @Override
     public CertificateRequest validateRequestRejection(Integer userId, Integer requestId) throws Exception {
+        logger.info("Validating request rejection for user {}, and request {}", userId, requestId);
         CertificateRequest request = this.certificateRequestRepository.findById(requestId)
                 .orElseThrow(() -> new Exception("Request does not exist!"));
         Role admin = roleService.findByName("ROLE_ADMIN");
@@ -50,12 +56,15 @@ public class CertificateRequestServiceImpl implements CertificateRequestService{
             return request;
         if (request.getIssuer() != null && !Objects.equals(request.getIssuer().getOwner().getId(), userId))
             throw new Exception("You can not reject this request!");
+
+        logger.info("Request rejection for user {} and request {} validated", userId, requestId);
         return request;
     }
 
 
     @Override
     public List<CertificateRequestDTO> getAllUserRequests(Integer id) {
+        logger.info("Getting all requests for user {}", id);
         return certificateRequestRepository.findAllByOwnerId(id).stream()
                 .map(CertificateRequestDTO::new).collect(Collectors.toList());
     }

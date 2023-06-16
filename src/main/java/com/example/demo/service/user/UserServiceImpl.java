@@ -27,6 +27,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createNew(UserDTO userDTO) {
+
         User user = new User();
 
         if (userRepository.findByEmail(userDTO.getEmail()) != null){
@@ -71,10 +72,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean shouldChangePassword(User user) {
         Timestamp today = new Timestamp((new Date()).getTime());
-        System.out.println(today + " -> " + user.getLastPasswordResetDate());
         long millisecondsDifference = Math.abs(user.getLastPasswordResetDate().getTime() - today.getTime());
         long minutesDifference = millisecondsDifference / (60 * 1000);
-        System.out.println(minutesDifference);
 
         return minutesDifference > 2;
     }
