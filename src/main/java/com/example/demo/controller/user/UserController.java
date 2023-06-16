@@ -5,7 +5,6 @@ import com.example.demo.controller.certificate.CertificateController;
 import com.example.demo.dto.ErrorDTO;
 import com.example.demo.dto.user.PasswordResetDTO;
 import com.example.demo.dto.user.UserDTO;
-import com.example.demo.dto.user.UserTokenState;
 import com.example.demo.model.user.PasswordReset;
 import com.example.demo.model.user.User;
 import com.example.demo.model.user.UserActivation;
@@ -18,17 +17,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
-import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -66,11 +62,19 @@ public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
+    @Autowired
+    private RecaptchaService recaptchaService;
+
     @PostMapping(value = "/login", consumes = "application/json")
-    public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest) {
+    public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest, @RequestParam String recaptchaResponse) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authenticationRequest.getEmail(), authenticationRequest.getPassword()));
+
+            if (!recaptchaService.verifyRecaptcha(recaptchaResponse)) {
+                return new ResponseEntity<>(new ErrorDTO("ReCaptcha validation failed!"), HttpStatus.BAD_REQUEST);
+            }
+
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                    authenticationRequest.getEmail(), authenticationRequest.getPassword()));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -110,8 +114,12 @@ public class UserController {
     }
 
     @PostMapping(value = "/register", consumes = "application/json")
-    public ResponseEntity<?> register(@Valid @RequestBody UserDTO userDTO){
+    public ResponseEntity<?> register(@Valid @RequestBody UserDTO userDTO, @RequestParam String recaptchaResponse){
         logger.info("user trying to register");
+        if (!recaptchaService.verifyRecaptcha(recaptchaResponse)) {
+            return new ResponseEntity<>(new ErrorDTO("ReCaptcha validation failed!"), HttpStatus.BAD_REQUEST);
+        }
+
         User user = userService.createNew(userDTO);
         if (user == null) {
             logger.warn("new user tried to register with existing e-mail");
