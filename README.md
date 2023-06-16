@@ -39,3 +39,5 @@ This project was developed for the purposes of the course [Information Security]
 - Nikola Milosavljević
 ### Course Professor
 - [Goran Sladić](https://www.linkedin.com/in/goran/)
+
+![Background](https://github.com/ThreeAmigosCoding/IB-Tim14-Frontend/blob/master/src/resources/background.png)
