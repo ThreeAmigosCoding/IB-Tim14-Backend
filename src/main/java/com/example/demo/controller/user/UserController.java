@@ -3,6 +3,7 @@ package com.example.demo.controller.user;
 
 import com.example.demo.controller.certificate.CertificateController;
 import com.example.demo.dto.ErrorDTO;
+import com.example.demo.dto.user.GoogleOAuthRequestDTO;
 import com.example.demo.dto.user.PasswordResetDTO;
 import com.example.demo.dto.user.UserDTO;
 import com.example.demo.model.user.PasswordReset;
@@ -11,6 +12,13 @@ import com.example.demo.model.user.UserActivation;
 import com.example.demo.service.email.EmailService;
 import com.example.demo.service.user.*;
 import com.example.demo.util.TokenUtils;
+import com.google.api.client.auth.openidconnect.IdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +32,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+
+import static com.example.demo.util.MyCredentials.oAuthClientId;
 
 @RestController
 @CrossOrigin
@@ -99,6 +112,30 @@ public class UserController {
         } catch (Exception e) {
             logger.warn("A user tried to log in with wrong username or password.", e);
             return new ResponseEntity<>(new ErrorDTO("Wrong username or password!"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping(value = "/oauth", consumes = "application/json")
+    public ResponseEntity<?> oauthLogin(@RequestBody GoogleOAuthRequestDTO googleOAuthRequest) throws GeneralSecurityException, IOException {
+        String idTokenString = googleOAuthRequest.getIdToken();
+        HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
+        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
+                .setAudience(Collections.singletonList(oAuthClientId))
+                .build();
+
+        GoogleIdToken idToken = verifier.verify(idTokenString);
+        if (idToken != null) {
+            IdToken.Payload payload = idToken.getPayload();
+
+            System.out.println(payload);
+            System.out.println(payload.get("email"));
+
+            return new ResponseEntity<>(new ErrorDTO("OK!"), HttpStatus.OK);
+        } else {
+            System.out.println("Invalid ID token.");
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
     }
 
