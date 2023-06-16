@@ -3,14 +3,23 @@ package com.example.demo.controller.user;
 
 import com.example.demo.controller.certificate.CertificateController;
 import com.example.demo.dto.ErrorDTO;
+import com.example.demo.dto.user.GoogleOAuthRequestDTO;
 import com.example.demo.dto.user.PasswordResetDTO;
 import com.example.demo.dto.user.UserDTO;
+import com.example.demo.dto.user.UserTokenState;
 import com.example.demo.model.user.PasswordReset;
 import com.example.demo.model.user.User;
 import com.example.demo.model.user.UserActivation;
 import com.example.demo.service.email.EmailService;
 import com.example.demo.service.user.*;
 import com.example.demo.util.TokenUtils;
+import com.google.api.client.auth.openidconnect.IdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +33,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+
+import static com.example.demo.util.MyCredentials.oAuthClientId;
 
 @RestController
 @CrossOrigin
@@ -65,6 +79,9 @@ public class UserController {
     @Autowired
     private RecaptchaService recaptchaService;
 
+    @Autowired
+    private OauthService oauthService;
+
     @PostMapping(value = "/login", consumes = "application/json")
     public ResponseEntity<?> login(@RequestBody UserDTO authenticationRequest, @RequestParam String recaptchaResponse) {
         try {
@@ -99,6 +116,20 @@ public class UserController {
         } catch (Exception e) {
             logger.warn("A user tried to log in with wrong username or password.", e);
             return new ResponseEntity<>(new ErrorDTO("Wrong username or password!"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping(value = "/oauth", consumes = "application/json")
+    public ResponseEntity<?> oauthLogin(@RequestBody GoogleOAuthRequestDTO googleOAuthRequest) {
+        try {
+            logger.info("User trying to login via google.");
+            User user = oauthService.oauthVerification(googleOAuthRequest);
+            String jwt = tokenUtils.generateToken(user);
+            int expiresIn = tokenUtils.getExpiredIn();
+            logger.info("user {} logged in successfully!", user.getId());
+            return ResponseEntity.ok(new UserTokenState(jwt, expiresIn));
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorDTO(e.getMessage()), HttpStatus.UNAUTHORIZED);
         }
     }
 

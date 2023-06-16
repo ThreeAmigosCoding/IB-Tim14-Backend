@@ -89,6 +89,7 @@ public class WebSecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
                 .requestMatchers("/api/user/register").permitAll()
                 .requestMatchers("/api/user/login").permitAll()
+                .requestMatchers("/api/user/oauth").permitAll()
                 .requestMatchers("/api/user/activate/{activation-id}").permitAll()
                 .requestMatchers("/api/user/{email}/resetPassword").permitAll()
                 .requestMatchers("/api/user/two-step-authentication/{email}/{code}").permitAll()
